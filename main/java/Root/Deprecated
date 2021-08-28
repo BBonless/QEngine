@@ -1,0 +1,447 @@
+   /* public void Initialize() {
+        GLFWErrorCallback.createPrint(System.err).set();
+
+        if (!glfwInit()) {
+            throw new IllegalStateException("Could not Initialize GLFW!");
+        }
+
+            //region External
+
+        //region Window Hints
+        glfwDefaultWindowHints();
+        glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
+        glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
+        //endregion
+
+        //region Create Window
+        Window = glfwCreateWindow(1080, 720, "QEngine", NULL, NULL);
+        if (Window == NULL) {
+            throw new IllegalStateException("Could not create window!");
+        }
+        //endregion
+
+        //region Push first frame
+        try (MemoryStack ThreadStack = stackPush()) {
+            IntBuffer Width = ThreadStack.mallocInt(1);
+            IntBuffer Height = ThreadStack.mallocInt(1);
+
+            glfwGetWindowSize(Window, Width, Height);
+
+            GLFWVidMode VideoMode = glfwGetVideoMode(glfwGetPrimaryMonitor());
+
+            glfwSetWindowPos(Window,
+                    (VideoMode.width() - Width.get(0)) / 2,
+                    (VideoMode.height() - Height.get(0)) / 2
+            );
+        }
+        //endregion
+
+        //region Link OpenGL
+        glfwMakeContextCurrent(Window);
+        GL.createCapabilities();
+        glfwSwapInterval(0); //V-Sync
+        glfwShowWindow(Window);
+
+        glClearColor(1f, 0.6f, 0.6f, 1f);
+        //endregion
+
+            //endregion
+
+            //region Internal
+
+        //region Input
+
+        Input = new InputCallbacks();
+
+        glfwSetKeyCallback(Window, Input.KeyboardCallback);
+        glfwSetCursorPosCallback(Window, Input.MouseCallback);
+        glfwSetMouseButtonCallback(Window, Input.MouseButtonCallback);
+        glfwSetFramebufferSizeCallback(Window, new GLFWFramebufferSizeCallback() {
+            @Override
+            public void invoke(long window, int width, int height) {
+                glViewport(0, 0, width, height);
+                Renderer.Cam.SetDimensions(new Vector2f(width, height));
+            }
+        });
+
+        //endregion
+
+        //region Renderer
+
+        Renderer.Init();
+
+        //endregion
+
+            //endregion
+
+
+
+    }*/
+
+       public static void Demo() {
+            try (MemoryStack Stack = stackPush()) {
+                /*FloatBuffer a = Stack.floats(1,2,3,4,5,6,7,8,9,10);
+                FloatBuffer b = Stack.floats(10,9,8,7,6,5,4,3,2,1);
+                FloatBuffer an = Stack.callocFloat(a.capacity());*/
+
+                /*FloatBuffer Particle = Stack.callocFloat(9*3);
+                Random R = new Random();
+                for (int i = 0; i < 9*3; i++) {
+                    float v = R.nextFloat();
+                    Particle.put(i, v);
+                    System.out.print(v + " ");
+                }
+                System.out.println();
+                FloatBuffer Result = Stack.callocFloat(3*3);*/
+
+                //FloatBuffer In = Stack.floats(0,0,0,1,1,1,2,2,2);
+                //FloatBuffer In2 = Stack.callocFloat(64*3);
+                //FloatBuffer Out = Stack.floats(0,0,0,0,0,0,0,0,0);
+
+                System.out.println(SimEngine.Particles[0].Position);
+                FloatBuffer In = SimEngine.Particles[0].GetBuffer(Stack);
+                //FloatBuffer In = Stack.callocFloat(9);
+                FloatBuffer In2 = Stack.callocFloat(17 * 64);
+                for (int i = 0; i < 64; i++) {
+                    if (i < SimEngine.Particles[0].Neighbors.size()) {
+                        FloatBuffer Penis = SimEngine.Particles[0].Neighbors.get(i).GetBuffer(Stack);
+
+                        In2.put(17 * i + 0, Penis.get(0));
+                        In2.put(17 * i + 1, Penis.get(1));
+                        In2.put(17 * i + 2, Penis.get(2));
+
+                        In2.put(17 * i + 3, Penis.get(3));
+                        In2.put(17 * i + 4, Penis.get(4));
+                        In2.put(17 * i + 5, Penis.get(5));
+
+                        In2.put(17 * i + 6, Penis.get(6));
+                        In2.put(17 * i + 7, Penis.get(7));
+                        In2.put(17 * i + 8, Penis.get(8));
+
+                        In2.put(17 * i + 9, Penis.get(9));
+                        In2.put(17 * i + 10, Penis.get(10));
+                        In2.put(17 * i + 11, Penis.get(11));
+
+                        In2.put(17 * i + 12, Penis.get(12));
+                        In2.put(17 * i + 13, Penis.get(13));
+                        In2.put(17 * i + 14, Penis.get(14));
+
+                        In2.put(17 * i + 15, Penis.get(15));
+
+                        In2.put(17 * i + 16, Penis.get(16));
+                    }
+                    else {
+                        for (int j = 0; j < 17; j++) {
+                            In2.put(17 * i + j, Float.NaN);
+                        }
+                    }
+                }
+                FloatBuffer In3 = Stack.callocFloat(16);
+                In3.put(0, Preferences.SmoothingRadius);
+                In3.put(1, Preferences.ParticleMass);
+                In3.put(2, Kernels.KernelRadiusPow1);
+                In3.put(3, Kernels.KernelRadiusPow2);
+                In3.put(4, Kernels.KernelRadiusPow6);
+                In3.put(5, Kernels.KernelRadiusPow9);
+                In3.put(6, Preferences.RestDensity);
+                In3.put(7, Preferences.Stiffness);
+                In3.put(8, Preferences.ParticleViscosity);
+                In3.put(9, Preferences.Gravity.x);
+                In3.put(10, Preferences.Gravity.y);
+                In3.put(11, Preferences.Gravity.z);
+                In3.put(12, Preferences.BoundarySize.x);
+                In3.put(13, Preferences.BoundarySize.y);
+                In3.put(14, Preferences.BoundarySize.z);
+                In3.put(15, Preferences.Timestep);
+                FloatBuffer Out = Stack.callocFloat(17);
+
+                IntBuffer ErrorcodeReturn = Stack.callocInt(1);
+
+                GetPlatformAndDevice(Stack);
+
+                GetContextCallback();
+
+                //long Context = clCreateContext(GetContextProperties(Stack), Device, ContextCallback, NULL, ErrorcodeReturn);
+                long Context = clCreateContextFromType(GetContextProperties(Stack), CL_DEVICE_TYPE_GPU, null, 0, ErrorcodeReturn);
+                checkCLError(ErrorcodeReturn);
+
+                long CommandQueue = clCreateCommandQueue(Context, Device, CL_QUEUE_PROFILING_ENABLE, ErrorcodeReturn);
+                checkCLError(ErrorcodeReturn);
+
+                System.out.println(InfoUtil2.getPlatformInfoStringUTF8(Platform, CL_PLATFORM_NAME));
+
+                //Allocate Memory
+                long InMEM = clCreateBuffer(Context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, In, ErrorcodeReturn);
+                clEnqueueWriteBuffer(CommandQueue, InMEM, true, 0, In, null, null);
+                checkCLError(ErrorcodeReturn);
+
+                long In2MEM = clCreateBuffer(Context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, In2, ErrorcodeReturn);
+                clEnqueueWriteBuffer(CommandQueue, In2MEM, true, 0, In2, null, null);
+                checkCLError(ErrorcodeReturn);
+
+                long In3MEM = clCreateBuffer(Context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, In3, ErrorcodeReturn);
+                clEnqueueWriteBuffer(CommandQueue, In3MEM, true, 0, In3, null ,null);
+                checkCLError(ErrorcodeReturn);
+
+                long OutMEM = clCreateBuffer(Context, CL_MEM_WRITE_ONLY | CL_MEM_COPY_HOST_PTR, Out, ErrorcodeReturn);
+                clEnqueueWriteBuffer(CommandQueue, OutMEM, true, 0, Out, null, null);
+                checkCLError(ErrorcodeReturn);
+
+                clFinish(CommandQueue);
+
+                /*long particleMemory = clCreateBuffer(Context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, Particle, ErrorcodeReturn);
+                clEnqueueWriteBuffer(CommandQueue, particleMemory, true, 0, Particle, null, null);
+                checkCLError(ErrorcodeReturn);
+
+                long resultMemory = clCreateBuffer(Context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, Result, ErrorcodeReturn);
+                clEnqueueWriteBuffer(CommandQueue, resultMemory, true, 0, Result, null, null);
+                checkCLError(ErrorcodeReturn);*/
+
+                //Load Source
+                ComputeProgram Program = new ComputeProgram(
+                        Context,
+                        "C:\\Users\\quent\\IdeaProjects\\QEngine 5.0\\src\\main\\java\\Root\\Compute\\Programs\\solver.cl"
+                );
+
+                //Execution
+
+                //Max amount of Neighbors is 64
+                //Include Target Particle
+                //Work size is 65
+                PointerBuffer Kernel1DGlobalWorkSize = Stack.callocPointer(1);
+                Kernel1DGlobalWorkSize.put(0, 17);
+
+                //PointerBuffer Kernel1DGlobalWorkSize = Stack.callocPointer(1);
+                //Kernel1DGlobalWorkSize.put(0, Particle.capacity());
+                clSetKernelArg1p(Program.Kernel, 0, InMEM);
+                clSetKernelArg1p(Program.Kernel, 1, In2MEM);
+                clSetKernelArg1p(Program.Kernel, 2, In3MEM);
+                clSetKernelArg1p(Program.Kernel, 3, OutMEM);
+                clEnqueueNDRangeKernel(CommandQueue, Program.Kernel, 1, null, Kernel1DGlobalWorkSize, null, null, null);
+
+                //Read Results
+                clEnqueueReadBuffer(CommandQueue, OutMEM, true, 0, Out, null, null);
+                clFinish(CommandQueue);
+
+                //Print Results
+                StringBuilder sb1 = new StringBuilder();
+                for (int i = 0; i < Out.capacity(); i++) {
+                    sb1.append(Out.get(i));
+                    sb1.append(" ");
+                }
+                System.out.println(sb1.toString());
+
+                //Bye
+                clReleaseKernel(Program.Kernel);
+                clReleaseMemObject(OutMEM);
+                clReleaseMemObject(In3MEM);
+                clReleaseMemObject(In2MEM);
+                clReleaseMemObject(InMEM);
+                clReleaseCommandQueue(CommandQueue);
+                clReleaseContext(Context);
+                CL.destroy();
+            }
+        }
+    }
+
+    StringBuilder cum = new StringBuilder();
+                DecimalFormat df = new DecimalFormat("0.#");
+                df.setPositivePrefix(" ");
+                df.setRoundingMode(RoundingMode.HALF_EVEN);
+
+                for (int i = 0; i < test.capacity(); i++) {
+                    if (i % 17 == 0 && i != 0) {
+                        cum.append('\n');
+                    }
+
+                    cum.append(df.format(test.get(i)));
+                    cum.append(' ');
+                }
+
+                System.out.println(cum.toString());
+
+            if (ImGui.button("Test GPU")) {
+                System.out.println(Stack.getSize());
+                System.out.println(SimEngine.Particles[0].Position);
+                FloatBuffer In = SimEngine.Particles[0].GetBuffer(Stack);
+                FloatBuffer In2 = Stack.callocFloat(17 * 64);
+                for (int i = 0; i < 64; i++) {
+                    if (i < SimEngine.Particles[0].Neighbors.size()) {
+                        FloatBuffer Penis = SimEngine.Particles[0].Neighbors.get(i).GetBuffer(Stack);
+
+                        In2.put(17 * i + 0, Penis.get(0));
+                        In2.put(17 * i + 1, Penis.get(1));
+                        In2.put(17 * i + 2, Penis.get(2));
+
+                        In2.put(17 * i + 3, Penis.get(3));
+                        In2.put(17 * i + 4, Penis.get(4));
+                        In2.put(17 * i + 5, Penis.get(5));
+
+                        In2.put(17 * i + 6, Penis.get(6));
+                        In2.put(17 * i + 7, Penis.get(7));
+                        In2.put(17 * i + 8, Penis.get(8));
+
+                        In2.put(17 * i + 9, Penis.get(9));
+                        In2.put(17 * i + 10, Penis.get(10));
+                        In2.put(17 * i + 11, Penis.get(11));
+
+                        In2.put(17 * i + 12, Penis.get(12));
+                        In2.put(17 * i + 13, Penis.get(13));
+                        In2.put(17 * i + 14, Penis.get(14));
+
+                        In2.put(17 * i + 15, Penis.get(15));
+
+                        In2.put(17 * i + 16, Penis.get(16));
+                    }
+                    else {
+                        for (int j = 0; j < 17; j++) {
+                            In2.put(17 * i + j, Float.NaN);
+                        }
+                    }
+                }
+                FloatBuffer In3 = Stack.callocFloat(16);
+                In3.put(0, Preferences.SmoothingRadius);
+                In3.put(1, Preferences.ParticleMass);
+                In3.put(2, Kernels.KernelRadiusPow1);
+                In3.put(3, Kernels.KernelRadiusPow2);
+                In3.put(4, Kernels.KernelRadiusPow6);
+                In3.put(5, Kernels.KernelRadiusPow9);
+                In3.put(6, Preferences.RestDensity);
+                In3.put(7, Preferences.Stiffness);
+                In3.put(8, Preferences.ParticleViscosity);
+                In3.put(9, Preferences.Gravity.x);
+                In3.put(10, Preferences.Gravity.y);
+                In3.put(11, Preferences.Gravity.z);
+                In3.put(12, Preferences.BoundarySize.x);
+                In3.put(13, Preferences.BoundarySize.y);
+                In3.put(14, Preferences.BoundarySize.z);
+                In3.put(15, Preferences.Timestep);
+                FloatBuffer Out = Stack.callocFloat(17);
+
+                Programs.get("SolverTest").AddFloatBuffer(0, In,CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR);
+                Programs.get("SolverTest").AddFloatBuffer(1, In2,CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR);
+                Programs.get("SolverTest").AddFloatBuffer(2, In3,CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR);
+                Programs.get("SolverTest").AddFloatBuffer(3, Out,CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR);
+                clFinish(CommandQueue);
+
+                Programs.get("SolverTest").AutoSetKernelArgs();
+                Programs.get("SolverTest").Dimensions = 1;
+                Programs.get("SolverTest").GlobalSize = 17;
+                Programs.get("SolverTest").AutoEnqueue(Out);
+
+                StringBuilder sb1 = new StringBuilder();
+                for (int i = 0; i < Out.capacity(); i++) {
+                    sb1.append(Out.get(i));
+                    sb1.append(" ");
+                }
+                System.out.println(sb1.toString());
+            }
+
+            if (ImGui.button("Test GPU 2")) {
+                FloatBuffer Particles = MemorySharing.GetParticleBuffer();
+                FloatBuffer Neighbors = MemorySharing.GetNeighborBuffer();
+                FloatBuffer Parameters = MemorySharing.GetParameterBuffer();
+                FloatBuffer Out = Stack.callocFloat(Particles.capacity());
+
+                Programs.get("SolverTest").AddFloatBuffer(0, Particles,CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR);
+                Programs.get("SolverTest").AddFloatBuffer(1, Neighbors,CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR);
+                Programs.get("SolverTest").AddFloatBuffer(2, Parameters,CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR);
+                Programs.get("SolverTest").AddFloatBuffer(3, Out,CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR);
+                clFinish(CommandQueue);
+
+                Programs.get("SolverTest").AutoSetKernelArgs();
+                Programs.get("SolverTest").Dimensions = 1;
+                Programs.get("SolverTest").GlobalSize = Particles.capacity() / 17;
+                Programs.get("SolverTest").AutoEnqueue(Out);
+
+                StringBuilder Output = new StringBuilder();
+                for (int i = 0; i < Out.capacity(); i++) {
+                    if (i % 17 == 0 && i != 0) {
+                        Output.append("\n");
+                    }
+
+                    Output.append(Out.get(i));
+                    Output.append(" ");
+                }
+                System.out.println(Output);
+            }
+
+
+if (ImGui.button("Test GPU 3")) {
+
+
+            if (f == false) {
+                Particles = MemorySharing.GetParticleBuffer();
+                Neighbors = MemorySharing.GetNeighborBuffer();
+                Parameters = MemorySharing.GetParameterBuffer();
+                Out = Stack.callocFloat(Particles.capacity());
+                f = true;
+            }
+            else {
+                MemorySharing.GetParticleBuffer(Particles);
+                MemorySharing.GetNeighborBuffer(Neighbors);
+                MemorySharing.GetParameterBuffer(Particles);
+            }
+
+
+            Programs.get("Solver").CreateWriteFloatBuffer(0, Particles, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR);
+            System.out.println("CWFB was called");
+            Programs.get("Solver").CreateWriteFloatBuffer(1, Neighbors,CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR);
+            //PrintU.FloatBufferDump(Neighbors, 64 * 17);
+            Programs.get("Solver").CreateWriteFloatBuffer(2, Parameters,CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR);
+            Programs.get("Solver").CreateWriteFloatBuffer(3, Out,CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR);
+            clFinish(CommandQueue);
+
+            Programs.get("Solver").AutoSetKernelArgs();
+            Programs.get("Solver").Dimensions = 1;
+            Programs.get("Solver").GlobalSize = Particles.capacity() / 17;
+            Programs.get("Solver").AutoEnqueue(
+                    new int[] {3},
+                    Out
+            );
+
+            float[] InitialPositions = new float[Particles.capacity() / 17 * 3];
+            int count17 = 0;
+            for (int i = 0; i < InitialPositions.length; i++) {
+                if (i % 3 == 0 && i != 0) {
+                    count17++;
+                }
+                InitialPositions[i] = Particles.get( i + (17 * count17) - (3 * count17) );
+            }
+
+            float[] GPU_Positions = new float[Out.capacity() / 17 * 3];
+            int count172 = 0;
+            for (int i = 0; i < GPU_Positions.length; i++) {
+                if (i % 3 == 0 && i != 0) {
+                    count172++;
+                }
+                GPU_Positions[i] = Out.get( i + (17 * count172) - (3 * count172) );
+            }
+
+            float[] CPU_Positions = SimEngine.Step();
+
+            assert InitialPositions.length == GPU_Positions.length && InitialPositions.length == CPU_Positions.length;
+
+            /*//int j = 0;
+            for (int i = 0; i < InitialPositions.length / 3; i++) {
+                System.out.format("%3f", InitialPositions[(i*3)]);System.out.print(" ");
+                System.out.format("%3f", InitialPositions[(i*3)+1] );System.out.print(" ");
+                System.out.format("%3f", InitialPositions[(i*3)+2] );System.out.print(" ");
+                System.out.print(" ");
+
+                System.out.format("%3f", GPU_Positions[(i*3)] );System.out.print(" ");
+                System.out.format("%3f", GPU_Positions[(i*3)+1] );System.out.print(" ");
+                System.out.format("%3f", GPU_Positions[(i*3)+2] );System.out.print(" ");
+                System.out.print(" ");
+
+                System.out.format("%3f", CPU_Positions[(i*3)] );System.out.print(" ");
+                System.out.format("%3f", CPU_Positions[(i*3)+1] );System.out.print(" ");
+                System.out.format("%3f", CPU_Positions[(i*3)+2] );System.out.print(" ");
+                System.out.println();
+            }*/
+
+            PrintU.FloatArrays(3, InitialPositions, GPU_Positions, CPU_Positions);
+
+            //SimEngine.ParticleObject.SetInstanced( GPU_Positions );
+            //SimEngine.ParticleObject.Mesh.UpdateInstanceBuffer();
+        }
