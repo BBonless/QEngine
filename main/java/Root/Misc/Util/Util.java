@@ -95,4 +95,24 @@ public class Util {
         return BR.lines().collect(Collectors.joining("\n"));
     }
 
+    private static char[] IllegalPathCharacters = new char[] {'"'};
+    public static String CorrectPath(String Path) {
+        StringBuilder SB = new StringBuilder();
+
+        for (char Current : Path.toCharArray()) {
+            boolean Clear = true;
+            for (char Illegal : IllegalPathCharacters) {
+                if (Current == Illegal) {
+                    Clear = false;
+                    break;
+                }
+            }
+            if (Clear) {
+                SB.append(Current);
+            }
+        }
+
+        return SB.toString();
+    }
+
 }

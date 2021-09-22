@@ -51,6 +51,20 @@ public class SpatialGrid {
         }
     }
 
+    public void Fill(ArrayList<ArrayList<Particle>> ParticlePackets) {
+        if (ParticlePackets.isEmpty()) {
+            return;
+        }
+
+        for (ArrayList<Particle> Particles : ParticlePackets) {
+            for (Particle P1 : Particles) {
+                int Index = PositionIndex1D(P1.Position);
+
+                Buckets.get(Index).add(P1);
+            }
+        }
+    }
+
     public void Clear() {
         for (ArrayList<Particle> Bucket : Buckets) {
             Bucket.clear();

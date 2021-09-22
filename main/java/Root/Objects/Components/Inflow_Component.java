@@ -16,7 +16,7 @@ import org.joml.Math;
 
 import java.util.ArrayList;
 
-public class Inflow_Component extends Component {
+public class    Inflow_Component extends Component {
 
     public ImFloat Radius = new ImFloat(10);
     public ImFloat Density = new ImFloat(1);
@@ -77,21 +77,21 @@ public class Inflow_Component extends Component {
 
     public void Spawn() {
         if (Time >= Rate.get()) {
-            Particle[] UpdatedParticleArray = new Particle[SimEngine.Particles.length + SpawnPositions.length];
+            Particle[] UpdatedParticleArray = new Particle[SimEngine.DynamicParticles.length + SpawnPositions.length];
 
-            System.arraycopy(SimEngine.Particles, 0, UpdatedParticleArray, 0, SimEngine.Particles.length);
+            System.arraycopy(SimEngine.DynamicParticles, 0, UpdatedParticleArray, 0, SimEngine.DynamicParticles.length);
 
-            for (int i = SimEngine.Particles.length; i < UpdatedParticleArray.length; i++) {
+            for (int i = SimEngine.DynamicParticles.length; i < UpdatedParticleArray.length; i++) {
                 Particle NewParticle = new Particle();
 
-                SpawnPositions[i - SimEngine.Particles.length].get(NewParticle.Position);
+                SpawnPositions[i - SimEngine.DynamicParticles.length].get(NewParticle.Position);
 
                 RotatedVelocity.get(NewParticle.Velocity);
 
                 UpdatedParticleArray[i] = NewParticle;
             }
 
-            SimEngine.Particles = UpdatedParticleArray;
+            SimEngine.DynamicParticles = UpdatedParticleArray;
 
             Time = 0;
         }

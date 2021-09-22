@@ -6,6 +6,7 @@ import Root.GUI.Layer;
 import Root.Misc.Util.BufferU;
 import Root.Misc.Util.PrintU;
 import Root.Simulation.MemorySharing;
+import Root.Simulation.SimEngine;
 import imgui.ImGui;
 import imgui.type.ImBoolean;
 
@@ -16,10 +17,11 @@ import static org.lwjgl.opencl.CL10.*;
 
 public class GPUTesting_Layer implements Layer {
 
-    FloatBuffer ParticleBuffer;
-    FloatBuffer NeighborBuffer;
-    FloatBuffer ParameterBuffer;
-    FloatBuffer OutputBuffer;
+    static FloatBuffer ParticleBuffer;
+    static FloatBuffer NeighborBuffer;
+    static FloatBuffer ParameterBuffer;
+
+    public static ImBoolean Play = new ImBoolean(false);
 
     @Override
     public void Render_ImGUI() {
@@ -37,6 +39,8 @@ public class GPUTesting_Layer implements Layer {
             GPU_TEST_STEP();
         }
 
+        if (ImGui.checkbox("GPU Play?", Play)) {}
+
         ImGui.end();
     }
 
@@ -44,39 +48,51 @@ public class GPUTesting_Layer implements Layer {
         ParticleBuffer = MemorySharing.GetParticleBuffer();
         NeighborBuffer = MemorySharing.GetNeighborBuffer();
         ParameterBuffer = MemorySharing.GetParameterBuffer();
-        OutputBuffer = Stack.callocFloat(ParticleBuffer.capacity());
+        PrintU.FloatBuffer(ParameterBuffer, 0);
 
         int Flags = CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR;
         GPU.Programs.get("Solver").CreateFloatBuffer(0, ParticleBuffer, Flags);
         GPU.Programs.get("Solver").CreateFloatBuffer(1, NeighborBuffer, Flags);
         GPU.Programs.get("Solver").CreateFloatBuffer(2, ParameterBuffer, Flags);
-        //GPU.Programs.get("Solver").CreateFloatBuffer(3, OutputBuffer, Flags);
         clFinish(CommandQueue);
     }
 
-    private void GPU_TEST_STEP() {
+    public static void GPU_TEST_STEP() {
         GPU.Programs.get("Solver").WriteFloatBuffer(0, ParticleBuffer);
-        //PrintU.FloatBuffer(ParticleBuffer, 17);
         GPU.Programs.get("Solver").WriteFloatBuffer(1, NeighborBuffer);
-        //PrintU.FloatBufferDump(NeighborBuffer, 17 * 64);
         GPU.Programs.get("Solver").WriteFloatBuffer(2, ParameterBuffer);
-        //PrintU.FloatBuffer(ParameterBuffer, 17);
-        //GPU.Programs.get("Solver").WriteFloatBuffer(3, OutputBuffer);
-        FloatBuffer cum = Stack.callocFloat(ParticleBuffer.capacity());
-        Programs.get("Solver").CreateWriteFloatBuffer(3, cum, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR);
-        //PrintU.FloatBuffer(OutputBuffer, 17);
+
+        FloatBuffer Output = Stack.callocFloat(ParticleBuffer.capacity());
+        GPU.Programs.get("Solver").CreateWriteFloatBuffer(3, Output, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR);
+
+        FloatBuffer OutPositions = Stack.callocFloat((ParticleBuffer.capacity() / 17) * 3);
+        Programs.get("Solver").CreateWriteFloatBuffer(4, OutPositions, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR);
         clFinish(CommandQueue);
 
         Programs.get("Solver").AutoSetKernelArgs();
         Programs.get("Solver").Dimensions = 1;
         Programs.get("Solver").GlobalSize = ParticleBuffer.capacity() / 17;
         Programs.get("Solver").AutoEnqueue(
-                new int[] {3},
-                cum
+                new int[] {3, 4},
+                Output, OutPositions
         );
 
-        PrintU.FloatBuffer(cum, 17);
-        //PrintU.FloatBuffer(OutputBuffer, 17);
+        //PrintU.FloatBuffer(Output, 17);
+        //PrintU.FloatBuffer(OutPositions, 3);
 
+        float[] kakusei = BufferU.FloatBuffer2Array(OutPositions);
+
+
+        SimEngine.ParticleObject.SetInstanced( kakusei );
+        SimEngine.ParticleObject.Mesh.UpdateInstanceBuffer();
+
+        Feedback(Output);
+
+    }
+
+    private static void Feedback(FloatBuffer Output) {
+        ParticleBuffer = Output;
+        //PrintU.FloatBufferDump(NeighborBuffer, 17);
+        MemorySharing.GetNeighborBuffer(NeighborBuffer);
     }
 }

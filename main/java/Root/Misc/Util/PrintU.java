@@ -12,9 +12,26 @@ public class PrintU {
     public static void FloatArray(float[] Array, int Width) {
         int WidthCounter = 0;
         for (float Value : Array) {
-            if (WidthCounter % Width == 0 && WidthCounter != 0) {
-                System.out.println();
-                WidthCounter = 0;
+            if (Width >= 1) {
+                if (WidthCounter % Width == 0 && WidthCounter != 0) {
+                    System.out.println();
+                    WidthCounter = 0;
+                }
+            }
+            System.out.print(Value + " ");
+            WidthCounter++;
+        }
+        System.out.println();
+    }
+
+    public static void IntArray(int[] Array, int Width) {
+        int WidthCounter = 0;
+        for (int Value : Array) {
+            if (Width >= 1) {
+                if (WidthCounter % Width == 0 && WidthCounter != 0) {
+                    System.out.println();
+                    WidthCounter = 0;
+                }
             }
             System.out.print(Value + " ");
             WidthCounter++;
@@ -39,9 +56,11 @@ public class PrintU {
     public static void FloatBuffer(FloatBuffer Buffer, int Width) {
         int WidthCounter = 0;
         for (int i = 0; i < Buffer.capacity(); i++) {
-            if (WidthCounter % Width == 0 && WidthCounter != 0) {
-                System.out.println();
-                WidthCounter = 0;
+            if (Width >= 1) {
+                if (WidthCounter % Width == 0 && WidthCounter != 0) {
+                    System.out.println();
+                    WidthCounter = 0;
+                }
             }
             System.out.print(Buffer.get(i) + " ");
             WidthCounter++;

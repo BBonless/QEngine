@@ -10,6 +10,7 @@ public class Camera {
     public static Vector3f Position = new Vector3f(0,0,0);
     public static Vector3f Rotation = new Vector3f(0,0,0);
 
+    public static final float BaseSpeed = 50f;
     public static float Speed = 50f;
     public static float Sensitivity = 0.25f;
 

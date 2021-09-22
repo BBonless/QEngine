@@ -1,7 +1,7 @@
 package Root.Rendering;
 
 import Root.Objects.Components.LightSource_Component;
-import Root.Objects.Geometry.Mesh;
+import Root.Geometry.Mesh;
 import Root.Shaders.ShaderProgram;
 import Root.Shaders.UniformTypes;
 import Root.Textures.NullTexture;
@@ -86,13 +86,21 @@ public class Renderer {
             glBindTexture(GL_TEXTURE_2D, NullTexture.Get());
         }
 
+        int RenderMode = GL_TRIANGLES;
+        if (Object.Name.equals("#WIREGIZMO")) {
+            RenderMode = GL_LINES;
+        }
+        else if (Object.Name.equals("#POLYGIZMO")) {
+            RenderMode = GL_LINES;
+        }
+
         if (Object.Instanced) {
             glEnableVertexAttribArray(3);
-            glDrawElementsInstanced(GL_TRIANGLES, ObjectMesh.Indices.length, GL_UNSIGNED_INT, 0, Object.InstanceCount);
+            glDrawElementsInstanced(RenderMode, ObjectMesh.Indices.length, GL_UNSIGNED_INT, 0, Object.InstanceCount);
             glDisableVertexAttribArray(3);
         }
         else {
-            glDrawElements(GL_TRIANGLES, ObjectMesh.Indices.length, GL_UNSIGNED_INT, 0);
+            glDrawElements(RenderMode, ObjectMesh.Indices.length, GL_UNSIGNED_INT, 0);
         }
 
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);

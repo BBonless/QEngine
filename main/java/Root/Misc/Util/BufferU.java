@@ -6,7 +6,9 @@ public class BufferU {
 
     public static float[] FloatBuffer2Array(FloatBuffer Buffer) {
         float[] Result = new float[Buffer.capacity()];
-        Buffer.put(Result);
+        for (int i = 0; i < Result.length; i++) {
+            Result[i] = Buffer.get(i);
+        }
         return Result;
     }
 

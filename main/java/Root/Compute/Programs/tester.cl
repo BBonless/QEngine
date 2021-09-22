@@ -76,13 +76,14 @@ bool IsNaN(float Number) {
 //Preferences[9,10,11] = Gravity x,y,z;
 //Preferences[12,13,14] = Bounds x,y,z;
 //Preferences[15] = Timestep;
+//Preferences[16] = Elasticity;
 
 //NeighborPosition = GetNeighborVectorValue(Neighbors, ParticleIndex, ParticleSize, NeighborIndex, 0);
 //NeighborVelocity = GetNeighborVectorValue(Neighbors, ParticleIndex, ParticleSize, NeighborIndex, 2);
 //NeighborPastAcceleration = GetNeighborVectorValue(Neighbors, ParticleIndex, ParticleSize, NeighborIndex, 3);
 //NeighborForce = GetNeighborVectorValue(Neighbors, ParticleIndex, ParticleSize, NeighborIndex, 4);
 
-kernel void tester( global const float *Particle, global const float *Neighbors, global const float *Preferences, global float *Out ) {
+kernel void tester( global const float *Particle, global const float *Neighbors, global const float *Preferences, global float *Out, global float *OutPositions ) {
     uint GlobalIndex = get_global_id(0);
     uint ParticleSize = 17;
     uint ParticleIndex = GlobalIndex * ParticleSize;
@@ -193,10 +194,48 @@ kernel void tester( global const float *Particle, global const float *Neighbors,
     Position += DeltaPosition;
     PastAcceleration = Force;
 
+    //Enforce Boundary
+    if (Position.x < Preferences[12] / -2) {
+        Position.x = (Preferences[12] / -2) + 0.001;
+        Velocity.x = -Velocity.x * Preferences[16];
+        Force.x = 0;
+    }
+    else if (Position.x > Preferences[12] / 2) {
+        Position.x = (Preferences[12] / 2) - 0.001;
+        Velocity.x = -Velocity.x * Preferences[16];
+        Force.x = 0;
+    }
+    
+    if (Position.y < Preferences[13] / -2) {
+        Position.y = (Preferences[13] / -2) + 0.001;
+        Velocity.y = -Velocity.y * Preferences[16];
+        Force.y = 0;
+    }
+    else if (Position.y > Preferences[13] / 2) {
+        Position.y = (Preferences[13] / 2) - 0.001;
+        Velocity.y = -Velocity.y * Preferences[16];
+        Force.y = 0;
+    }
+    
+    if (Position.z < Preferences[14] / -2) {
+        Position.z = (Preferences[14] / -2) + 0.001;
+        Velocity.z = -Velocity.z * Preferences[16];
+        Force.z = 0;
+    }
+    else if (Position.z > Preferences[14] / 2) {
+        Position.z = (Preferences[14] / 2) - 0.001;
+        Velocity.z = -Velocity.z * Preferences[16];
+        Force.z = 0;
+    }
+
     //Write to Memory Object
     Out[ParticleIndex + 0] = Position.x;
     Out[ParticleIndex + 1] = Position.y;
     Out[ParticleIndex + 2] = Position.z;
+
+    OutPositions[GlobalIndex * 3 + 0] = Position.x;
+    OutPositions[GlobalIndex * 3 + 1] = Position.y;
+    OutPositions[GlobalIndex * 3 + 2] = Position.z;
 
     Out[ParticleIndex + 3] = 0;
     Out[ParticleIndex + 4] = 0;
@@ -217,8 +256,4 @@ kernel void tester( global const float *Particle, global const float *Neighbors,
     Out[ParticleIndex + 15] = Pressure;
 
     Out[ParticleIndex + 16] = Density;
-
-    /*PositionsOut[GlobalIndex * 3 + 0] = Position.x;
-    PositionsOut[GlobalIndex * 3 + 1] = Position.y;
-    PositionsOut[GlobalIndex * 3 + 2] = Position.z;*/
 }

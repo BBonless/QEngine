@@ -7,9 +7,9 @@ import static Root.Compute.GPU.Stack;
 public class MemorySharing {
 
     public static FloatBuffer GetParticleBuffer() {
-        FloatBuffer Buffer = Stack.callocFloat(SimEngine.Particles.length * 17);
-        for (int ParticleIndex = 0; ParticleIndex < SimEngine.Particles.length; ParticleIndex++) {
-            Particle P = SimEngine.Particles[ParticleIndex];
+        FloatBuffer Buffer = Stack.callocFloat(SimEngine.DynamicParticles.length * 17);
+        for (int ParticleIndex = 0; ParticleIndex < SimEngine.DynamicParticles.length; ParticleIndex++) {
+            Particle P = SimEngine.DynamicParticles[ParticleIndex];
 
             Buffer.put((ParticleIndex * 17) + 0, P.Position.x);
             Buffer.put((ParticleIndex * 17) + 1, P.Position.y);
@@ -39,8 +39,8 @@ public class MemorySharing {
     }
 
     public static void GetParticleBuffer(FloatBuffer Buffer) {
-        for (int ParticleIndex = 0; ParticleIndex < SimEngine.Particles.length; ParticleIndex++) {
-            Particle P = SimEngine.Particles[ParticleIndex];
+        for (int ParticleIndex = 0; ParticleIndex < SimEngine.DynamicParticles.length; ParticleIndex++) {
+            Particle P = SimEngine.DynamicParticles[ParticleIndex];
 
             Buffer.put((ParticleIndex * 17) + 0, P.Position.x);
             Buffer.put((ParticleIndex * 17) + 1, P.Position.y);
@@ -69,79 +69,80 @@ public class MemorySharing {
     }
 
     public static FloatBuffer GetNeighborBuffer() {
-        FloatBuffer Buffer = Stack.callocFloat(SimEngine.Particles.length * 64 * 17);
-        for (int ParticleIndex = 0; ParticleIndex < SimEngine.Particles.length; ParticleIndex++) {
-            Particle P = SimEngine.Particles[ParticleIndex];
+        FloatBuffer Buffer = Stack.callocFloat(SimEngine.DynamicParticles.length * 64 * 17);
+
+        for (int ParticleIndex = 0; ParticleIndex < SimEngine.DynamicParticles.length; ParticleIndex++) {
+            Particle Particle = SimEngine.DynamicParticles[ParticleIndex];
 
             for (int NeighborIndex = 0; NeighborIndex < 64; NeighborIndex++) {
-                if (NeighborIndex < P.Neighbors.size() ) {
-                    Buffer.put((ParticleIndex * 64) + (NeighborIndex * 17) + 0, P.Position.x);
-                    Buffer.put((ParticleIndex * 64) + (NeighborIndex * 17) + 1, P.Position.y);
-                    Buffer.put((ParticleIndex * 64) + (NeighborIndex * 17) + 2, P.Position.z);
+                System.out.print(NeighborIndex + " / ");
+                System.out.println(Particle.Neighbors.size());
+                if (NeighborIndex < Particle.Neighbors.size()) {
+                    Particle Neighbor = Particle.Neighbors.get(NeighborIndex);
 
-                    Buffer.put((ParticleIndex * 64) + (NeighborIndex * 17) + 3, P.PastPosition.x);
-                    Buffer.put((ParticleIndex * 64) + (NeighborIndex * 17) + 4, P.PastPosition.y);
-                    Buffer.put((ParticleIndex * 64) + (NeighborIndex * 17) + 5, P.PastPosition.z);
+                    Buffer.put( (ParticleIndex * (64 * 17)) + (17 * NeighborIndex) + 0, Neighbor.Position.x );
+                    Buffer.put( (ParticleIndex * (64 * 17)) + (17 * NeighborIndex) + 1, Neighbor.Position.y );
+                    Buffer.put( (ParticleIndex * (64 * 17)) + (17 * NeighborIndex) + 2, Neighbor.Position.z );
 
-                    Buffer.put((ParticleIndex * 64) + (NeighborIndex * 17) + 6, P.Velocity.x);
-                    Buffer.put((ParticleIndex * 64) + (NeighborIndex * 17) + 7, P.Velocity.y);
-                    Buffer.put((ParticleIndex * 64) + (NeighborIndex * 17) + 8, P.Velocity.z);
+                    Buffer.put( (ParticleIndex * (64 * 17)) + (17 * NeighborIndex) + 6, Neighbor.Velocity.x );
+                    Buffer.put( (ParticleIndex * (64 * 17)) + (17 * NeighborIndex) + 7, Neighbor.Velocity.y );
+                    Buffer.put( (ParticleIndex * (64 * 17)) + (17 * NeighborIndex) + 8, Neighbor.Velocity.z );
 
-                    Buffer.put((ParticleIndex * 64) + (NeighborIndex * 17) + 9, P.PastAcceleration.x);
-                    Buffer.put((ParticleIndex * 64) + (NeighborIndex * 17) + 10, P.PastAcceleration.y);
-                    Buffer.put((ParticleIndex * 64) + (NeighborIndex * 17) + 11, P.PastAcceleration.z);
+                    Buffer.put( (ParticleIndex * (64 * 17)) + (17 * NeighborIndex) + 9, Neighbor.PastAcceleration.x );
+                    Buffer.put( (ParticleIndex * (64 * 17)) + (17 * NeighborIndex) + 10, Neighbor.PastAcceleration.y );
+                    Buffer.put( (ParticleIndex * (64 * 17)) + (17 * NeighborIndex) + 11, Neighbor.PastAcceleration.z );
 
-                    Buffer.put((ParticleIndex * 64) + (NeighborIndex * 17) + 12, P.Force.x);
-                    Buffer.put((ParticleIndex * 64) + (NeighborIndex * 17) + 13, P.Force.y);
-                    Buffer.put((ParticleIndex * 64) + (NeighborIndex * 17) + 14, P.Force.z);
+                    Buffer.put( (ParticleIndex * (64 * 17)) + (17 * NeighborIndex) + 12, Neighbor.Force.x );
+                    Buffer.put( (ParticleIndex * (64 * 17)) + (17 * NeighborIndex) + 13, Neighbor.Force.y );
+                    Buffer.put( (ParticleIndex * (64 * 17)) + (17 * NeighborIndex) + 14, Neighbor.Force.z );
 
-                    Buffer.put((ParticleIndex * 64) + (NeighborIndex * 17) + 15, P.Pressure);
+                    Buffer.put( (ParticleIndex * (64 * 17)) + (17 * NeighborIndex) + 15, Neighbor.Pressure );
 
-                    Buffer.put((ParticleIndex * 64) + (NeighborIndex * 17) + 16, P.Density);
-                }
-                else {
+                    Buffer.put( (ParticleIndex * (64 * 17)) + (17 * NeighborIndex) + 16, Neighbor.Density );
+
+                } else {
                     for (int i = 0; i < 17; i++) {
-                        Buffer.put((ParticleIndex * 64) + (NeighborIndex * 17) + i, Float.NaN);
+                        Buffer.put((ParticleIndex * (64 * 17)) + (17 * NeighborIndex) + i, Float.NaN);
                     }
                 }
             }
         }
+
         return Buffer;
+
     }
 
     public static void GetNeighborBuffer(FloatBuffer Buffer) {
-        for (int ParticleIndex = 0; ParticleIndex < SimEngine.Particles.length; ParticleIndex++) {
-            Particle P = SimEngine.Particles[ParticleIndex];
+        for (int ParticleIndex = 0; ParticleIndex < SimEngine.DynamicParticles.length; ParticleIndex++) {
+            Particle Particle = SimEngine.DynamicParticles[ParticleIndex];
 
             for (int NeighborIndex = 0; NeighborIndex < 64; NeighborIndex++) {
-                if (NeighborIndex < P.Neighbors.size() ) {
-                    Buffer.put((ParticleIndex * 64) + (NeighborIndex * 17) + 0, P.Position.x);
-                    Buffer.put((ParticleIndex * 64) + (NeighborIndex * 17) + 1, P.Position.y);
-                    Buffer.put((ParticleIndex * 64) + (NeighborIndex * 17) + 2, P.Position.z);
+                if (NeighborIndex < Particle.Neighbors.size()) {
+                    Particle Neighbor = Particle.Neighbors.get(NeighborIndex);
 
-                    Buffer.put((ParticleIndex * 64) + (NeighborIndex * 17) + 3, P.PastPosition.x);
-                    Buffer.put((ParticleIndex * 64) + (NeighborIndex * 17) + 4, P.PastPosition.y);
-                    Buffer.put((ParticleIndex * 64) + (NeighborIndex * 17) + 5, P.PastPosition.z);
+                    Buffer.put( (ParticleIndex * (64 * 17)) + (17 * NeighborIndex) + 0, Neighbor.Position.x );
+                    Buffer.put( (ParticleIndex * (64 * 17)) + (17 * NeighborIndex) + 1, Neighbor.Position.y );
+                    Buffer.put( (ParticleIndex * (64 * 17)) + (17 * NeighborIndex) + 2, Neighbor.Position.z );
 
-                    Buffer.put((ParticleIndex * 64) + (NeighborIndex * 17) + 6, P.Velocity.x);
-                    Buffer.put((ParticleIndex * 64) + (NeighborIndex * 17) + 7, P.Velocity.y);
-                    Buffer.put((ParticleIndex * 64) + (NeighborIndex * 17) + 8, P.Velocity.z);
+                    Buffer.put( (ParticleIndex * (64 * 17)) + (17 * NeighborIndex) + 6, Neighbor.Velocity.x );
+                    Buffer.put( (ParticleIndex * (64 * 17)) + (17 * NeighborIndex) + 7, Neighbor.Velocity.y );
+                    Buffer.put( (ParticleIndex * (64 * 17)) + (17 * NeighborIndex) + 8, Neighbor.Velocity.z );
 
-                    Buffer.put((ParticleIndex * 64) + (NeighborIndex * 17) + 9, P.PastAcceleration.x);
-                    Buffer.put((ParticleIndex * 64) + (NeighborIndex * 17) + 10, P.PastAcceleration.y);
-                    Buffer.put((ParticleIndex * 64) + (NeighborIndex * 17) + 11, P.PastAcceleration.z);
+                    Buffer.put( (ParticleIndex * (64 * 17)) + (17 * NeighborIndex) + 9, Neighbor.PastAcceleration.x );
+                    Buffer.put( (ParticleIndex * (64 * 17)) + (17 * NeighborIndex) + 10, Neighbor.PastAcceleration.y );
+                    Buffer.put( (ParticleIndex * (64 * 17)) + (17 * NeighborIndex) + 11, Neighbor.PastAcceleration.z );
 
-                    Buffer.put((ParticleIndex * 64) + (NeighborIndex * 17) + 12, P.Force.x);
-                    Buffer.put((ParticleIndex * 64) + (NeighborIndex * 17) + 13, P.Force.y);
-                    Buffer.put((ParticleIndex * 64) + (NeighborIndex * 17) + 14, P.Force.z);
+                    Buffer.put( (ParticleIndex * (64 * 17)) + (17 * NeighborIndex) + 12, Neighbor.Force.x );
+                    Buffer.put( (ParticleIndex * (64 * 17)) + (17 * NeighborIndex) + 13, Neighbor.Force.y );
+                    Buffer.put( (ParticleIndex * (64 * 17)) + (17 * NeighborIndex) + 14, Neighbor.Force.z );
 
-                    Buffer.put((ParticleIndex * 64) + (NeighborIndex * 17) + 15, P.Pressure);
+                    Buffer.put( (ParticleIndex * (64 * 17)) + (17 * NeighborIndex) + 15, Neighbor.Pressure );
 
-                    Buffer.put((ParticleIndex * 64) + (NeighborIndex * 17) + 16, P.Density);
-                }
-                else {
+                    Buffer.put( (ParticleIndex * (64 * 17)) + (17 * NeighborIndex) + 16, Neighbor.Density );
+
+                } else {
                     for (int i = 0; i < 17; i++) {
-                        Buffer.put((ParticleIndex * 64) + (NeighborIndex * 17) + i, Float.NaN);
+                        Buffer.put((ParticleIndex * (64 * 17)) + (17 * NeighborIndex) + i, Float.NaN);
                     }
                 }
             }
@@ -149,7 +150,7 @@ public class MemorySharing {
     }
 
     public static FloatBuffer GetParameterBuffer() {
-        FloatBuffer Buffer = Stack.callocFloat(16);
+        FloatBuffer Buffer = Stack.callocFloat(17);
         Buffer.put(0, Preferences.SmoothingRadius);
         Buffer.put(1, Preferences.ParticleMass);
         Buffer.put(2, Kernels.KernelRadiusPow1);
@@ -166,6 +167,7 @@ public class MemorySharing {
         Buffer.put(13, Preferences.BoundarySize.y);
         Buffer.put(14, Preferences.BoundarySize.z);
         Buffer.put(15, Preferences.Timestep);
+        Buffer.put(16, Preferences.BoundaryElasticity);
         return Buffer;
     }
 

@@ -3,7 +3,7 @@ package Root;
 import Root.Compute.GPU;
 import Root.GUI.Canvas;
 import Root.GUI.Layers.*;
-import Root.Objects.Geometry.Mesh;
+import Root.Geometry.Mesh;
 import Root.Objects.ObjectManager;
 import Root.Objects.WorldObject;
 import Root.Rendering.Gizmo;
@@ -14,8 +14,6 @@ import Root.Simulation.Preferences;
 import Root.Textures.NullTexture;
 import org.joml.Random;
 import org.joml.Vector3f;
-
-import java.awt.*;
 
 public class Environment {
 
@@ -134,8 +132,6 @@ public class Environment {
         }
         //endregion
 
-        SplashScreen.getSplashScreen().close();
-
         Engine.Start();
     }
 
@@ -149,6 +145,8 @@ public class Environment {
         Canvas.Layers.add(new SimulationStatistics_Layer());
         Canvas.Layers.add(new Browser_Layer());
         Canvas.Layers.add(new GPUTesting_Layer());
+        Canvas.Layers.add(new Test_Layer());
+        Canvas.Layers.add(new Test2_Layer());
 
         ObjectManager.Init();
         ShaderManager.Init();

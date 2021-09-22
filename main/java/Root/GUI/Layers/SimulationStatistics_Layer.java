@@ -13,7 +13,7 @@ public class SimulationStatistics_Layer implements Layer {
 
         ImGui.pushItemWidth(160);
 
-        ImInt ParticleCount = new ImInt(SimEngine.Particles == null ? 0 : SimEngine.Particles.length);
+        ImInt ParticleCount = new ImInt(SimEngine.DynamicParticles == null ? 0 : SimEngine.DynamicParticles.length);
         ImGui.inputInt("Particle Amount", ParticleCount, 0, 0, ImGuiInputTextFlags.ReadOnly);
 
         ImGui.popItemWidth();

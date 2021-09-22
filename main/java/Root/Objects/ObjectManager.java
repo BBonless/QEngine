@@ -3,7 +3,7 @@ package Root.Objects;
 import Root.Engine;
 import Root.Misc.Structures.ObjectTree;
 import Root.Objects.Components.*;
-import Root.Objects.Geometry.SphereMesh;
+import Root.Geometry.SphereMesh;
 import Root.Rendering.Renderer;
 import Root.Shaders.Material;
 import org.joml.Vector3f;
@@ -16,6 +16,7 @@ public class ObjectManager {
             "Light Source Component",
             "Inflow Component",
             "Outflow Component",
+            "Collision Component",
             "Debug Component"
     };
 
@@ -61,6 +62,9 @@ public class ObjectManager {
                 new Outflow_Component().Attach(Target);
                 break;
             case 3:
+                new Collision_Component().Attach(Target);
+                break;
+            case 4:
                 new Debug_Component().Attach(Target);
                 break;
             default:

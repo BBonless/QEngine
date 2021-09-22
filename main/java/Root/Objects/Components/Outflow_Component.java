@@ -24,11 +24,11 @@ public class Outflow_Component extends Component {
     public void Suck() {
         ArrayList<Particle> Victims = SimEngine.Grid.NeighborQuery(Parent.Position, Radius.get());
 
-        Particle[] UpdatedParticleArray = new Particle[SimEngine.Particles.length - Victims.size()];
+        Particle[] UpdatedParticleArray = new Particle[SimEngine.DynamicParticles.length - Victims.size()];
 
         int Count = 0;
         Particle Remove = null;
-        for (Particle P1 : SimEngine.Particles) {
+        for (Particle P1 : SimEngine.DynamicParticles) {
             for (Particle P2 : Victims) {
                 if (P1.equals(P2)) {
                     Remove = P2;
@@ -40,11 +40,13 @@ public class Outflow_Component extends Component {
                 Remove = null;
             }
             else {
-                UpdatedParticleArray[Count++] = P1;
+                if (Count < UpdatedParticleArray.length) {
+                    UpdatedParticleArray[Count++] = P1;
+                }
             }
         }
 
-        SimEngine.Particles = UpdatedParticleArray;
+        SimEngine.DynamicParticles = UpdatedParticleArray;
     }
 
     @Override

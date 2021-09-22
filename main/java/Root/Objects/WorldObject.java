@@ -2,7 +2,7 @@ package Root.Objects;
 
 import Root.Misc.Structures.ObjectTree;
 import Root.Objects.Components.Component;
-import Root.Objects.Geometry.Mesh;
+import Root.Geometry.Mesh;
 import Root.Shaders.Material;
 import Root.Shaders.ShaderProgram;
 import Root.Textures.Texture;

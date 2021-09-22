@@ -2,17 +2,14 @@ package Root.GUI.Layers;
 
 import Root.Engine;
 import Root.GUI.Layer;
+import Root.Geometry.*;
 import Root.Misc.Structures.ObjectTree;
-import Root.Misc.Util.PrintU;
 import Root.Misc.Util.Util;
 import Root.Objects.Components.Component;
-import Root.Objects.Geometry.CubeMesh;
-import Root.Objects.Geometry.SphereMesh;
 import Root.Objects.ObjectManager;
 import Root.Objects.WorldObject;
+import Root.Rendering.Gizmo;
 import Root.Shaders.ShaderManager;
-import Root.Simulation.MemorySharing;
-import Root.Simulation.SimEngine;
 import imgui.ImGui;
 import imgui.flag.ImGuiCol;
 import imgui.flag.ImGuiInputTextFlags;
@@ -22,14 +19,15 @@ import imgui.type.ImBoolean;
 import imgui.type.ImFloat;
 import imgui.type.ImInt;
 import imgui.type.ImString;
+import org.joml.Vector3f;
 
 import java.nio.FloatBuffer;
 import java.util.LinkedList;
 import java.util.Queue;
 
-import static Root.Compute.GPU.*;
+import static org.lwjgl.assimp.Assimp.aiProcess_JoinIdenticalVertices;
+import static org.lwjgl.assimp.Assimp.aiProcess_Triangulate;
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_ENTER;
-import static org.lwjgl.opencl.CL10.*;
 
 public class Browser_Layer implements Layer {
 
@@ -37,7 +35,7 @@ public class Browser_Layer implements Layer {
 
     private ImInt ChildIndex = new ImInt(0);
 
-    private ObjectTree CurrentObject = ObjectManager.Tree;
+    public static ObjectTree CurrentObject = ObjectManager.Tree;
 
     private float[] PositionValue = new float[] {0,0,0};
     private float[] RotationValue = new float[] {0,0,0};
@@ -51,7 +49,9 @@ public class Browser_Layer implements Layer {
     private ImInt ShaderIndex = new ImInt(0);
 
     private WorldObject NewbornObject;
+    private String NewObjectPopupMessage = "";
     private ImString NewbornObjectName = new ImString(256);
+    private ImString NewbornObjectImportFilepath = new ImString(256);
 
     private boolean AddComponent = false;
     private ImInt ComponentTypeIndex = new ImInt(0);
@@ -115,9 +115,28 @@ public class Browser_Layer implements Layer {
         return NewObject;
     }
 
+    private WorldObject Objects_Add_File() {
+        WorldObject NewObject = new WorldObject();
+
+        ObjectTree NewObjectNode = new ObjectTree(NewObject);
+
+        CurrentObject.AddChild(NewObjectNode);
+
+        Engine.RenderQueue.add(NewObject);
+
+        return NewObject;
+    }
+
     public Browser_Layer() {
         ResetTransformValues();
         ResetMaterialValues();
+    }
+
+    private void CancelCreateObject() {
+        System.out.println("Test");
+        ObjectManager.DeleteObject(NewbornObject);
+        NewbornObject = null;
+        ImGui.closeCurrentPopup();
     }
 
     private void Popups_ImGUI() {
@@ -143,7 +162,33 @@ public class Browser_Layer implements Layer {
             }
             ImGui.popItemWidth();
 
+            if (NewObjectPopupMessage.equals("Import")) {
+                ImGui.pushItemWidth(400);
+
+                ImGui.separator();
+                ImGui.inputText("Model Path", NewbornObjectImportFilepath);
+                if (ImGui.button("Load") || ImGui.isKeyPressed(GLFW_KEY_ENTER)) {
+                    Mesh[] ImportMesh = MeshLoader.Import(
+                            NewbornObjectImportFilepath.get(),
+                            aiProcess_JoinIdenticalVertices | aiProcess_Triangulate
+                    );
+
+                    if (ImportMesh == null) {
+                        NewbornObjectImportFilepath.set("File not found!");
+                    }
+                    else {
+                        NewbornObject.Mesh = ImportMesh[0];
+                        NewbornObjectImportFilepath.set("Mesh loaded successfully!");
+                    }
+                }
+
+                ImGui.popItemWidth();
+            }
+
             if (ImGui.button("Add")) {
+                NewObjectPopupMessage = "";
+                NewbornObjectImportFilepath.set("");
+
                 if (ObjectManager.Tree.ValidateName(NewbornObjectName.get())) {
                     NewbornObject.Name = NewbornObjectName.get();
                     NewbornObjectName.clear();
@@ -161,10 +206,7 @@ public class Browser_Layer implements Layer {
 
             ImGui.sameLine();
             if (ImGui.button("Cancel")) {
-                System.out.println("Test");
-                ObjectManager.DeleteObject(NewbornObject);
-                NewbornObject = null;
-                ImGui.closeCurrentPopup();
+                CancelCreateObject();
             }
             ImGui.endPopup();
         }
@@ -197,6 +239,8 @@ public class Browser_Layer implements Layer {
     FloatBuffer OutPFB;
     FloatBuffer Out;
 
+    public static float[] cum = new float[3];
+
     @Override
     public void Render_ImGUI() {
         ImGui.begin("Object Browser", new ImBoolean(true), ImGuiWindowFlags.MenuBar);
@@ -218,6 +262,14 @@ public class Browser_Layer implements Layer {
                     if(ImGui.menuItem("Empty")) {
                         NewbornObject = Object_Add_Empty();
                     }
+
+                    ImGui.separator();
+
+                    if (ImGui.menuItem("Import 3D Mesh")) {
+                        NewbornObject = Objects_Add_File();
+                        NewObjectPopupMessage = "Import";
+                    }
+
                     ImGui.endMenu();
                 }
                 ImGui.endMenu();
@@ -284,6 +336,20 @@ public class Browser_Layer implements Layer {
             CurrentObject.Element.Scale = Util.FloatArrToVec(ScaleValue);
             ObjectManager.ComponentInternalUpdate(CurrentObject.Element);
         }
+
+        if (ImGui.button("CUM BUTTON!!!")) {
+            Test2_Layer.IntersectionPoints.clear();
+            long s = System.currentTimeMillis();
+            System.out.println(" " + Operations.InMeshX(CurrentObject.Element, new Vector3f(cum[0],cum[1], cum[2])) );
+            System.out.println("Time Taken: " + (System.currentTimeMillis() - s) + "ms");
+        }
+        if (ImGui.inputFloat3("Cum", cum)) {}
+        Gizmo.PushSphereGizmo(new Vector3f(cum[0],cum[1], cum[2]), 0.2f);
+
+        if (ImGui.button("CUMSHOT ")) {
+
+        }
+        ////////////
 
         if (ImGui.beginTabBar("ObjectOptions")) {
 
