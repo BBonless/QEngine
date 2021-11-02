@@ -1,22 +1,17 @@
 package Root.Objects.Components;
 
 import Root.Engine;
-import Root.Geometry.Mesh;
-import Root.Geometry.Operations;
-import Root.Geometry.SphereMesh;
-import Root.Misc.Util.MathU;
+import Root.Geometry.*;
 import Root.Misc.Util.Util;
 import Root.Objects.WorldObject;
-import Root.Rendering.Gizmo;
 import Root.Shaders.Material;
+import Root.Shaders.ShaderManager;
 import Root.Shaders.ShaderProgram;
 import Root.Simulation.Particle;
 import Root.Simulation.Preferences;
 import Root.Simulation.SimEngine;
 import imgui.ImGui;
 import imgui.type.ImBoolean;
-import imgui.type.ImFloat;
-import imgui.type.ImInt;
 import org.joml.Math;
 import org.joml.Vector3f;
 
@@ -24,18 +19,19 @@ import java.util.ArrayList;
 
 public class Collision_Component extends Component {
 
-    private int[] Divisions = new int[] {20};
+    private int[] Resolution = new int[] {1};
 
-    private float[] Points;
     public ArrayList<Particle> Particles = new ArrayList<>();
+    ArrayList<Float> ParticleLocations = new ArrayList<>();
 
     WorldObject CollisionObject;
 
-    public float[] Density = new float[] {Preferences.RestDensity};
+    public float[] Density = new float[] {Preferences.RestDensity[0] * 100};
     public ImBoolean Include = new ImBoolean(false);
 
     public Collision_Component() {
         Name = "Collision";
+        Type = ComponentManager.ComponentType.Collision;
     }
 
     private void CreateParticles() {
@@ -76,7 +72,8 @@ public class Collision_Component extends Component {
                 Particle TriParticle = new Particle();
                 TriParticle.Position = TriVert;
                 TriParticle.Density = Density[0];
-                TriParticle.Pressure = Preferences.Stiffness * (TriParticle.Density - Preferences.RestDensity);
+                TriParticle.Pressure = Preferences.Stiffness[0] * (TriParticle.Density - Preferences.RestDensity[0]);
+                TriParticle.DoNotMeshify = true;
                 Particles.add(TriParticle);
             }
         }
@@ -85,20 +82,22 @@ public class Collision_Component extends Component {
             Engine.RenderQueue.remove(CollisionObject);
         }
 
-        Mesh PointMesh = SphereMesh.Generate(Preferences.ParticleDrawSize / 4, 4, 4);
+        Mesh PointMesh = PlaneMesh.Generate(0.025f);
 
         CollisionObject = new WorldObject(PointMesh);
 
+        CollisionObject.Name = "#TEST";
+
         CollisionObject.Material = new Material(
-                new Vector3f(0.6f, 0.05f, 0.05f),
-                new Vector3f(0.6f, 0.05f, 0.05f),
-                new Vector3f(0.5f, 0.5f, 0.5f),
-                2f
+                new Vector3f(1f, 0.05f, 0.05f),
+                new Vector3f(0),
+                new Vector3f(0),
+                0f
         );
 
         CollisionObject.Shader = new ShaderProgram(
-                ShaderProgram.LoadShaderResource("/LitInstanced.vert"),
-                ShaderProgram.LoadShaderResource("/LitInstanced.frag")
+                ShaderManager.LoadShaderResource("/Billboard.vert"),
+                ShaderManager.LoadShaderResource("/Billboard.frag")
         );
 
         CollisionObject.SetInstanced(Util.FloatArrList2Arr(Points));
@@ -106,9 +105,50 @@ public class Collision_Component extends Component {
         Engine.RenderQueue.add(CollisionObject);
     }
 
+    private void TransformParticlePoint(Vector3f Point) {
+        Point.mul(Parent.Scale);
+
+
+        Point
+                .rotateX(Math.toRadians(Parent.Rotation.x))
+                .rotateY(Math.toRadians(Parent.Rotation.y))
+                .rotateZ(Math.toRadians(Parent.Rotation.z));
+
+        Point.add(Parent.Position);
+    }
+
+    private void RecursiveBreakTriangles(Vector3f Tri1, Vector3f Tri2, Vector3f Tri3, int Level) {
+        if (Level <= 0) {
+            return;
+        }
+
+        Vector3f Midpoint = new Vector3f(
+                (Tri1.x+Tri2.x+Tri3.x) / 3,
+                (Tri1.y+Tri2.y+Tri3.y) / 3,
+                (Tri1.z+Tri2.z+Tri3.z) / 3
+        );
+
+        //TransformParticlePoint(Midpoint);
+
+        for (int i = 0; i < 3; i++) {
+            ParticleLocations.add(Midpoint.get(i));
+        }
+
+        Particle MidpointParticle = new Particle();
+        MidpointParticle.Position = Midpoint;
+        MidpointParticle.Density = Density[0];
+        MidpointParticle.Pressure = Preferences.Stiffness[0] * (MidpointParticle.Density - Preferences.RestDensity[0]);
+        MidpointParticle.DoNotMeshify = true;
+        Particles.add(MidpointParticle);
+
+        RecursiveBreakTriangles(Midpoint, Tri1, Tri2, Level - 1);
+        RecursiveBreakTriangles(Midpoint, Tri2, Tri3, Level - 1);
+        RecursiveBreakTriangles(Midpoint, Tri3, Tri1, Level - 1);
+    }
+
     private void UpdatePoints() {
         float[] TriData = new float[Parent.Mesh.Indices.length * 3];
-        ArrayList<Float> Points = new ArrayList<>();
+        ParticleLocations.clear();
         Particles.clear();
 
         int Count = 0;
@@ -129,34 +169,34 @@ public class Collision_Component extends Component {
                     (TriData[i+2] + TriData[i+5] + TriData[i+8]) / 3
             );
 
-            int ParticleCount = 0;
             for (Vector3f TriVert : TriVerts) {
-                TriVert.mul(Parent.Scale);
-
-
-                TriVert
-                        .rotateX(Math.toRadians(Parent.Rotation.x))
-                        .rotateY(Math.toRadians(Parent.Rotation.y))
-                        .rotateZ(Math.toRadians(Parent.Rotation.z));
-
-                TriVert.add(Parent.Position);
+               TransformParticlePoint(TriVert);
 
                 for (int j = 0; j < 3; j++) {
-                    Points.add(TriVert.get(j));
+                    ParticleLocations.add(TriVert.get(j));
                 }
 
                 Particle TriParticle = new Particle();
                 TriParticle.Position = TriVert;
                 TriParticle.Density = Density[0];
-                TriParticle.Pressure = Preferences.Stiffness * (TriParticle.Density - Preferences.RestDensity);
+                TriParticle.Pressure = Preferences.Stiffness[0] * (TriParticle.Density - Preferences.RestDensity[0]);
+                TriParticle.DoNotMeshify = true;
                 Particles.add(TriParticle);
-
-                //Particles.get(ParticleCount++).Position = TriVert;
             }
+
+            RecursiveBreakTriangles(TriVerts[3], TriVerts[0], TriVerts[1], Resolution[0]);
+            RecursiveBreakTriangles(TriVerts[3], TriVerts[1], TriVerts[2], Resolution[0]);
+            RecursiveBreakTriangles(TriVerts[3], TriVerts[2], TriVerts[0], Resolution[0]);
         }
 
-        CollisionObject.SetInstanced(Util.FloatArrList2Arr(Points));
+        CollisionObject.SetInstanced(Util.FloatArrList2Arr(ParticleLocations));
         CollisionObject.Mesh.UpdateInstanceBuffer();
+    }
+
+    @Override
+    public void Attach(WorldObject Target) {
+        super.Attach(Target);
+        CreateParticles();
     }
 
     @Override
@@ -166,10 +206,17 @@ public class Collision_Component extends Component {
 
     @Override
     public void InternalGUI() {
-        if (ImGui.dragInt("Resolution", Divisions)) {}
-        if (ImGui.button("Test")) {
-            CreateParticles();
+        if (ImGui.dragInt("Resolution", Resolution, 0.01f)) {
+            InternalUpdate();
         }
+
+        if (ImGui.dragFloat("Density", Density)) {
+            for (Particle P1 : Particles) {
+                P1.Density = Density[0];
+                P1.Pressure = Preferences.Stiffness[0] * (P1.Density - Preferences.RestDensity[0]);
+            }
+        }
+
         if(ImGui.checkbox("Include in Sim?", Include)) {
             if (Include.get()) {
                 SimEngine.StaticParticles.add(Particles);
@@ -178,23 +225,11 @@ public class Collision_Component extends Component {
                 SimEngine.StaticParticles.remove(Particles);
             }
         }
-
-        if (ImGui.dragFloat("Density", Density)) {
-            for (Particle P1 : Particles) {
-                P1.Density = Density[0];
-                P1.Pressure = Preferences.Stiffness * (P1.Density - Preferences.RestDensity);
-            }
-        }
-
-        if (!Particles.isEmpty()) {
-            System.out.println(Particles.get(0).Density);
-        }
     }
 
     @Override
     public void InternalUpdate() {
         UpdatePoints();
-        System.out.println("Updating");
     }
 
     @Override

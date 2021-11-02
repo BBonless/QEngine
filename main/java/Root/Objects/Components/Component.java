@@ -1,15 +1,21 @@
 package Root.Objects.Components;
 
 import Root.GUI.Layers.Browser_Layer;
+import Root.Misc.Util.ArrayU;
+import Root.Objects.ObjectManager;
 import Root.Objects.WorldObject;
 import Root.Shaders.ShaderProgram;
 import imgui.ImGui;
+import imgui.flag.ImGuiCol;
 import imgui.type.ImString;
 
 public abstract class Component {
-    protected WorldObject Parent;
+    protected transient WorldObject Parent;
 
     public String Name = "No Name";
+    public ComponentManager.ComponentType Type = ComponentManager.ComponentType.None;
+
+    private boolean PendingDelete = false;
 
     abstract public void Upload(ShaderProgram Shader);
 
@@ -19,37 +25,25 @@ public abstract class Component {
 
     abstract public void Update();
 
-    private boolean OpenOptions = false;
-    private ImString NameValue = new ImString(64);
     public void GUI() {
-        if (ImGui.beginPopup("Options")) {
-            NameValue.clear();
-            ImGui.text("Rename Component");
-            ImGui.inputText("", NameValue);
-            if (ImGui.isItemDeactivatedAfterEdit()) {
-                Name = ValidateName(NameValue.get());
-                ImGui.closeCurrentPopup();
-            }
-
-            if (ImGui.button("Remove Component")) {
-                Browser_Layer.DeletionQueue.add(this);
-                ImGui.closeCurrentPopup();
-            }
-            ImGui.endPopup();
-        }
-
         if (ImGui.beginTabItem(Name)) {
-            if (ImGui.isMouseDoubleClicked(0) && ImGui.isItemHovered()) {
-                OpenOptions = true;
-            }
+
             InternalGUI();
+
+            //Only allow user-addable components to be deleted
+            if (ArrayU.StrArrContains(ComponentManager.ComponentTypeList, Name)) {
+                ImGui.pushStyleColor(ImGuiCol.Button, 0.514f, 0.224f, 0.173f, 1.0f);
+                if (ImGui.button("Remove Component")) {
+                    PendingDelete = true;
+                }
+                ImGui.popStyleColor();
+            }
+
+
             ImGui.endTabItem();
         }
 
-        if (OpenOptions) {
-            OpenOptions = false;
-            ImGui.openPopup("Options");
-        }
+
     }
 
     private String ValidateName(String Name) {

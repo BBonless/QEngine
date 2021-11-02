@@ -12,6 +12,7 @@ public class LightSource_Component extends Component {
 
     public LightSource_Component(Vector3f ColorIn) {
         Name = "Light Source";
+        Type = ComponentManager.ComponentType.Light;
         Color = ColorIn;
     }
 

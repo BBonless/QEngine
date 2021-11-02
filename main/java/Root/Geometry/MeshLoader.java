@@ -40,55 +40,30 @@ public class MeshLoader {
     }
 
     private static Mesh ProcessMesh(AIMesh MeshIn) {
-        float[][] GetVerticesResult = GetVertices(MeshIn);
+        float[] GetVerticesResult = GetVertices(MeshIn);
 
         Mesh NewMesh = new Mesh(
-                GetVerticesResult[0],
+                GetVerticesResult,
                 GetNormals(MeshIn),
                 GetTextureCoordinates(MeshIn),
                 GetIndices(MeshIn)
         );
 
-        NewMesh.Max = new Vector3f(
-                GetVerticesResult[1][0],
-                GetVerticesResult[1][1],
-                GetVerticesResult[1][2]
-        );
-
-        NewMesh.Min = new Vector3f(
-                GetVerticesResult[2][0],
-                GetVerticesResult[2][1],
-                GetVerticesResult[2][2]
-        );
-
         return NewMesh;
     }
 
-    private static float[][] GetVertices(AIMesh MeshIn) {
+    private static float[] GetVertices(AIMesh MeshIn) {
         ArrayList<Float> Vertices = new ArrayList<>();
-        float[] Max = new float[3];
-        float[] Min = new float[3];
-        float[][] Result = new float[3][];
 
         AIVector3D.Buffer VertexBuffer = MeshIn.mVertices();
         while (VertexBuffer.remaining() > 0) {
             AIVector3D Vertex = VertexBuffer.get();
             Vertices.add(Vertex.x());
-            Max[0] = Math.max(Max[0], Vertex.x());
-            Min[0] = Math.min(Min[0], Vertex.x());
             Vertices.add(Vertex.y());
-            Max[1] = Math.max(Max[1], Vertex.y());
-            Min[1] = Math.min(Min[1], Vertex.y());
             Vertices.add(Vertex.z());
-            Max[2] = Math.max(Max[2], Vertex.z());
-            Min[2] = Math.min(Min[2], Vertex.z());
         }
 
-        Result[0] = Util.FloatArrList2Arr(Vertices);
-        Result[1] = Max;
-        Result[2] = Min;
-
-        return Result;
+        return Util.FloatArrList2Arr(Vertices);
     }
 
     private static float[] GetNormals(AIMesh MeshIn) {

@@ -1,6 +1,6 @@
 package Root.GUI;
 
-import Root.IO.InputCallbacks;
+import Root.IO.Control.InputCallbacks;
 import Root.Rendering.Renderer;
 import imgui.ImGui;
 import imgui.ImGuiIO;
@@ -97,7 +97,7 @@ public class Window {
             @Override
             public void invoke(long window, int width, int height) {
                 glViewport(0, 0, width, height);
-                Renderer.Cam.SetDimensions(new Vector2f(width, height));
+                Renderer.Camera.SetDimensions(new Vector2f(width, height));
             }
         });
 

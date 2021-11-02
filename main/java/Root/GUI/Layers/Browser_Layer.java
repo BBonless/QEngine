@@ -1,225 +1,194 @@
 package Root.GUI.Layers;
 
-import Root.Engine;
 import Root.GUI.Layer;
 import Root.Geometry.*;
 import Root.Misc.Structures.ObjectTree;
-import Root.Misc.Util.Util;
 import Root.Objects.Components.Component;
+import Root.Objects.Components.ComponentManager;
 import Root.Objects.ObjectManager;
 import Root.Objects.WorldObject;
-import Root.Rendering.Gizmo;
-import Root.Shaders.ShaderManager;
+import Root.Textures.Texture;
 import imgui.ImGui;
 import imgui.flag.ImGuiCol;
 import imgui.flag.ImGuiInputTextFlags;
-import imgui.flag.ImGuiSliderFlags;
 import imgui.flag.ImGuiWindowFlags;
 import imgui.type.ImBoolean;
-import imgui.type.ImFloat;
 import imgui.type.ImInt;
 import imgui.type.ImString;
-import org.joml.Vector3f;
+import org.joml.Math;
 
-import java.nio.FloatBuffer;
-import java.util.LinkedList;
-import java.util.Queue;
-
+import static Root.IO.File.Load.Load;
+import static Root.IO.File.Save.Save;
+import static Root.Objects.ObjectManager.AddObject;
 import static org.lwjgl.assimp.Assimp.aiProcess_JoinIdenticalVertices;
 import static org.lwjgl.assimp.Assimp.aiProcess_Triangulate;
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_ENTER;
 
 public class Browser_Layer implements Layer {
 
-    private Queue<String> Nodes = new LinkedList<>();
+    private ImInt CurrentChildIndex = new ImInt(0);
 
-    private ImInt ChildIndex = new ImInt(0);
-
+    //Selects Root
     public static ObjectTree CurrentObject = ObjectManager.Tree;
 
-    private float[] PositionValue = new float[] {0,0,0};
-    private float[] RotationValue = new float[] {0,0,0};
-    private float[] ScaleValue = new float[] {1,1,1};
-
-    private float[] AmbientValue = new float[] {0,0,0};
-    private float[] DiffuseValue = new float[] {0,0,0};
-    private float[] SpecularValue = new float[] {0,0,0};
-    private ImFloat ShininessValue = new ImFloat(0);
-
-    private ImInt ShaderIndex = new ImInt(0);
-
     private WorldObject NewbornObject;
-    private String NewObjectPopupMessage = "";
     private ImString NewbornObjectName = new ImString(256);
     private ImString NewbornObjectImportFilepath = new ImString(256);
 
     private boolean AddComponent = false;
     private ImInt ComponentTypeIndex = new ImInt(0);
 
-    public static Queue<Component> DeletionQueue = new LinkedList<>();
-
-    private void NewObjectSelected(ObjectTree NewObject) {
-        CurrentObject = NewObject;
-
-        ResetTransformValues();
-
-        ResetMaterialValues();
-    }
-
-    private void ResetTransformValues() {
-        PositionValue = Util.VecToFloatArr(CurrentObject.Element.Position);
-        RotationValue = Util.VecToFloatArr(CurrentObject.Element.Rotation);
-        ScaleValue = Util.VecToFloatArr(CurrentObject.Element.Scale);
-    }
-
-    private void ResetMaterialValues() {
-        AmbientValue = Util.VecToFloatArr(CurrentObject.Element.Material.Ambient);
-        DiffuseValue = Util.VecToFloatArr(CurrentObject.Element.Material.Diffuse);
-        SpecularValue = Util.VecToFloatArr(CurrentObject.Element.Material.Specular);
-        ShininessValue.set(CurrentObject.Element.Material.Shininess);
-    }
-
-    private WorldObject Objects_Add_DebugBox() {
-        WorldObject NewObject = new WorldObject(CubeMesh.Generate());
-
-        ObjectTree NewObjectNode = new ObjectTree(NewObject);
-
-        CurrentObject.AddChild(NewObjectNode);
-
-        Engine.RenderQueue.add(NewObject);
-
-        return NewObject;
-    }
-
-    private WorldObject Objects_Add_Sphere() {
-        WorldObject NewObject = new WorldObject(SphereMesh.Generate(1, 12, 10));
-
-        ObjectTree NewObjectNode = new ObjectTree(NewObject);
-
-        CurrentObject.AddChild(NewObjectNode);
-
-        Engine.RenderQueue.add(NewObject);
-
-        return NewObject;
-    }
-
-    private WorldObject Object_Add_Empty() {
-        WorldObject NewObject = new WorldObject();
-
-        ObjectTree NewObjectNode = new ObjectTree(NewObject);
-
-        CurrentObject.AddChild(NewObjectNode);
-
-        Engine.RenderQueue.add(NewObject);
-
-        return NewObject;
-    }
-
-    private WorldObject Objects_Add_File() {
-        WorldObject NewObject = new WorldObject();
-
-        ObjectTree NewObjectNode = new ObjectTree(NewObject);
-
-        CurrentObject.AddChild(NewObjectNode);
-
-        Engine.RenderQueue.add(NewObject);
-
-        return NewObject;
-    }
+    private Texture EditTexture;
 
     public Browser_Layer() {
-        ResetTransformValues();
-        ResetMaterialValues();
+        EditTexture = new Texture("/Icons/Edit32.png");
     }
 
-    private void CancelCreateObject() {
+    private void SelectNewObject(ObjectTree NewObject) {
+        CurrentObject = NewObject;
+
+        CurrentChildIndex.set(0);
+    }
+
+    private void CancelObjectCreation() {
         System.out.println("Test");
         ObjectManager.DeleteObject(NewbornObject);
         NewbornObject = null;
         ImGui.closeCurrentPopup();
     }
 
-    private void Popups_ImGUI() {
+    private void CleanupObjectCreation() {
+        NewbornObjectImportFilepath.set("");
+
+        NewbornObjectName.clear();
+        NewbornObject = null;
+        ImGui.closeCurrentPopup();
+    }
+
+    private boolean ValidateObjectCreation() {
+        //Check if name is error message
+        if (NewbornObjectName.get().contains("Name cannot be blank!") ||
+            NewbornObjectName.get().contains("Name already exists!"))
+        {
+            return false;
+        }
+
+        //Check if name is blank
+        if (NewbornObjectName.get().isBlank())
+        {
+            NewbornObjectName.set("Name cannot be blank!");
+            return false;
+        }
+
+        //Check if name already exists, otherwise name is valid
+        if (ObjectManager.Tree.ValidateName(NewbornObjectName.get())) {
+            NewbornObject.Name = NewbornObjectName.get();
+            return true;
+        } else {
+            NewbornObjectName.set("Name already exists!");
+            return false;
+        }
+    }
+
+    private void Popups_AddObject() {
         if (ImGui.beginPopupModal("New Object", ImGuiWindowFlags.NoSavedSettings)) {
             ImGui.text("Enter Name:");
 
             ImGui.pushItemWidth(160);
             ImGui.inputText("", NewbornObjectName);
             if (ImGui.isKeyPressed(GLFW_KEY_ENTER)) {
-                if (ObjectManager.Tree.ValidateName(NewbornObjectName.get())) {
-                    NewbornObject.Name = NewbornObjectName.get();
-                    NewbornObjectName.clear();
-                    NewbornObject = null;
-                    ImGui.closeCurrentPopup();
-                } else {
-                    if (NewbornObjectName.get().isBlank()) {
-                        NewbornObjectName.set("Name cannot be blank!");
-                    }
-                    else {
-                        NewbornObjectName.set("Name already exists!");
-                    }
+                if (ValidateObjectCreation()) {
+                    CleanupObjectCreation();
                 }
             }
             ImGui.popItemWidth();
 
-            if (NewObjectPopupMessage.equals("Import")) {
-                ImGui.pushItemWidth(400);
-
-                ImGui.separator();
-                ImGui.inputText("Model Path", NewbornObjectImportFilepath);
-                if (ImGui.button("Load") || ImGui.isKeyPressed(GLFW_KEY_ENTER)) {
-                    Mesh[] ImportMesh = MeshLoader.Import(
-                            NewbornObjectImportFilepath.get(),
-                            aiProcess_JoinIdenticalVertices | aiProcess_Triangulate
-                    );
-
-                    if (ImportMesh == null) {
-                        NewbornObjectImportFilepath.set("File not found!");
-                    }
-                    else {
-                        NewbornObject.Mesh = ImportMesh[0];
-                        NewbornObjectImportFilepath.set("Mesh loaded successfully!");
-                    }
-                }
-
-                ImGui.popItemWidth();
-            }
-
             if (ImGui.button("Add")) {
-                NewObjectPopupMessage = "";
-                NewbornObjectImportFilepath.set("");
-
-                if (ObjectManager.Tree.ValidateName(NewbornObjectName.get())) {
-                    NewbornObject.Name = NewbornObjectName.get();
-                    NewbornObjectName.clear();
-                    NewbornObject = null;
-                    ImGui.closeCurrentPopup();
-                } else {
-                    if (NewbornObjectName.get().isBlank()) {
-                        NewbornObjectName.set("Name cannot be blank!");
-                    }
-                    else {
-                        NewbornObjectName.set("Name already exists!");
-                    }
+                if (ValidateObjectCreation()) {
+                    CleanupObjectCreation();
                 }
             }
 
             ImGui.sameLine();
             if (ImGui.button("Cancel")) {
-                CancelCreateObject();
+                CancelObjectCreation();
+            }
+
+            ImGui.endPopup();
+        }
+    }
+
+    private void Popups_ImportObject() {
+        if (ImGui.beginPopupModal("Import Object", ImGuiWindowFlags.NoSavedSettings)) {
+            ImGui.text("Enter Name:");
+
+            ImGui.pushItemWidth(160);
+            ImGui.inputText("", NewbornObjectName);
+            if (ImGui.isKeyPressed(GLFW_KEY_ENTER)) {
+                if (ValidateObjectCreation()) {
+                    CleanupObjectCreation();
+                }
+            }
+            ImGui.popItemWidth();
+
+            ImGui.pushItemWidth(400);
+
+            ImGui.separator();
+            ImGui.inputText("Model Path", NewbornObjectImportFilepath);
+            if (ImGui.button("Load") || ImGui.isKeyPressed(GLFW_KEY_ENTER)) {
+                Mesh[] ImportedMesh = MeshLoader.Import(
+                        NewbornObjectImportFilepath.get(),
+                        aiProcess_JoinIdenticalVertices | aiProcess_Triangulate
+                );
+
+                if (ImportedMesh == null) {
+                    NewbornObjectImportFilepath.set("File not found!");
+                }
+                else {
+                    if (ImportedMesh.length > 1) {
+                        ObjectTree CurrentObjectAux = CurrentObject;
+                        System.out.println(NewbornObject == null);
+                        System.out.println(NewbornObject.Container == null);
+                        SelectNewObject(NewbornObject.Container);
+                        for (int i = 0; i < ImportedMesh.length; i++) {
+                            WorldObject MeshPart = ObjectManager.AddObject(ObjectManager.ObjectType.Empty);
+
+                            MeshPart.Name = "Part" + i;
+
+                            MeshPart.Mesh = ImportedMesh[i];
+                        }
+                        SelectNewObject(CurrentObjectAux);
+                    } else {
+                        NewbornObject.Mesh = ImportedMesh[0];
+                    }
+                    NewbornObjectImportFilepath.set("Mesh loaded successfully!");
+                }
+            }
+
+            ImGui.popItemWidth();
+
+            if (ImGui.button("Add")) {
+                if (ValidateObjectCreation()) {
+                    CleanupObjectCreation();
+                }
+            }
+
+            ImGui.sameLine();
+            if (ImGui.button("Cancel")) {
+                CancelObjectCreation();
             }
             ImGui.endPopup();
         }
+    }
 
+    private void Popups_AddComponent() {
         if (ImGui.beginPopupModal("Add Component", ImGuiWindowFlags.NoSavedSettings)) {
             AddComponent = false;
             ImGui.pushItemWidth(260);
-            if (ImGui.combo("Type", ComponentTypeIndex, ObjectManager.ComponentTypes)) {
-                System.out.println(ObjectManager.ComponentTypes[ComponentTypeIndex.get()]);
-            }
+            ImGui.combo("Type", ComponentTypeIndex, ComponentManager.ComponentTypeList);
             ImGui.popItemWidth();
             if (ImGui.button("Add")) {
-                ObjectManager.AddComponent(CurrentObject.Element, ComponentTypeIndex.get());
+                ComponentManager.AddComponent(CurrentObject.Element, ComponentTypeIndex.get());
                 ImGui.closeCurrentPopup();
             }
             ImGui.sameLine();
@@ -230,44 +199,51 @@ public class Browser_Layer implements Layer {
         }
     }
 
-    boolean f = false;
+    private void Popups_ImGUI() {
 
-    FloatBuffer Particles;
-    FloatBuffer Neighbors;
-    FloatBuffer Parameters;
-    FloatBuffer OutFB;
-    FloatBuffer OutPFB;
-    FloatBuffer Out;
+        Popups_AddObject();
 
-    public static float[] cum = new float[3];
+        Popups_ImportObject();
+
+        Popups_AddComponent();
+    }
 
     @Override
     public void Render_ImGUI() {
         ImGui.begin("Object Browser", new ImBoolean(true), ImGuiWindowFlags.MenuBar);
 
-        boolean HasChildren = !CurrentObject.GetChildren().isEmpty();
-        boolean Root = CurrentObject.Parent == null;
+        boolean CurrentObjHasChildren = !CurrentObject.Children.isEmpty();
+        boolean CurrentObjIsRoot = CurrentObject.Parent == null;
 
         Popups_ImGUI();
 
         if (ImGui.beginMenuBar()) {
+            if (ImGui.beginMenu("File")) {
+                if (ImGui.menuItem("Save")) {
+                    Save("C:\\Users\\quent\\Desktop\\Test.qes");
+                }
+                if (ImGui.menuItem("Load")) {
+                    Load("C:\\Users\\quent\\Desktop\\Test.qes");
+                }
+                ImGui.endMenu();
+            }
+
             if (ImGui.beginMenu("Objects")) {
-                if (ImGui.beginMenu("Add")) {
-                    if (ImGui.menuItem("Debug Box")) {
-                        NewbornObject = Objects_Add_DebugBox();
+                if (ImGui.beginMenu("Create")) {
+                    if (ImGui.menuItem("Cube")) {
+                        NewbornObject = AddObject(ObjectManager.ObjectType.DebugBox);
                     }
                     if(ImGui.menuItem("Sphere")) {
-                        NewbornObject = Objects_Add_Sphere();
+                        NewbornObject = AddObject(ObjectManager.ObjectType.Sphere);
                     }
                     if(ImGui.menuItem("Empty")) {
-                        NewbornObject = Object_Add_Empty();
+                        NewbornObject = AddObject(ObjectManager.ObjectType.Empty);
                     }
 
                     ImGui.separator();
 
                     if (ImGui.menuItem("Import 3D Mesh")) {
-                        NewbornObject = Objects_Add_File();
-                        NewObjectPopupMessage = "Import";
+                        NewbornObject = AddObject(ObjectManager.ObjectType.Import);
                     }
 
                     ImGui.endMenu();
@@ -279,26 +255,22 @@ public class Browser_Layer implements Layer {
         }
 
         if (NewbornObject != null) {
-            ImGui.openPopup("New Object");
+            ImGui.openPopup(NewbornObject.Name);
         }
 
         if (AddComponent) {
             ImGui.openPopup("Add Component");
         }
 
-        ImGui.text("Current Object: ");
-        ImGui.sameLine();
-        ImString CurrentObjectName = new ImString(256); CurrentObjectName.set(CurrentObject.Element.Name);
-        if (ImGui.inputText("", CurrentObjectName, Root ? ImGuiInputTextFlags.ReadOnly : 0)) {
-            CurrentObject.Element.Name = CurrentObjectName.get();
-        }
+        ImGui.text("Current Object: "); ImGui.sameLine(); ImGui.pushItemWidth(ImGui.getWindowSizeX() / 2);
+        ImGui.inputText("", new ImString(CurrentObject.Element.Name), ImGuiInputTextFlags.ReadOnly);
+        ImGui.popItemWidth(); ImGui.sameLine(); ImGui.imageButton(EditTexture.Handle, 14, 14);
 
-        ImGui.listBox("Children", ChildIndex, GetChildNodeArray(CurrentObject) );
+        ImGui.listBox("Children", CurrentChildIndex, GetChildNodeArray(CurrentObject) );
 
-
-        if (HasChildren && ChildIndex.get() < CurrentObject.ChildCount()) {
+        if (CurrentObjHasChildren && CurrentChildIndex.get() < CurrentObject.Children.size()) {
             if (ImGui.button("Forward")) {
-                NewObjectSelected(CurrentObject.GetChild(ChildIndex.get()));
+                SelectNewObject(CurrentObject.Children.get(CurrentChildIndex.get()));
             }
         }
         else {
@@ -309,7 +281,7 @@ public class Browser_Layer implements Layer {
         }
 
         ImGui.sameLine();
-        if (Root) {
+        if (CurrentObjIsRoot) {
             ImGui.pushStyleColor(ImGuiCol.Button, 0.25f, 0.25f, 0.25f, 1.0f);
             ImGui.pushStyleColor(ImGuiCol.ButtonHovered, 0.25f, 0.25f, 0.25f, 1.0f);
             ImGui.button("Back");
@@ -317,79 +289,19 @@ public class Browser_Layer implements Layer {
         }
         else {
             if (ImGui.button("Back")) {
-                NewObjectSelected(CurrentObject.Parent);
+                SelectNewObject(CurrentObject.Parent);
             }
         }
 
-
-        if (ImGui.dragFloat3("Position", PositionValue, 0.01f)) {
-            CurrentObject.Element.Position = Util.FloatArrToVec(PositionValue);
-            ObjectManager.ComponentInternalUpdate(CurrentObject.Element);
-        }
-
-        if (ImGui.dragFloat3("Rotation", RotationValue, 0.01f)) {
-            CurrentObject.Element.Rotation = Util.FloatArrToVec(RotationValue);
-            ObjectManager.ComponentInternalUpdate(CurrentObject.Element);
-        }
-
-        if (ImGui.dragFloat3("Scale", ScaleValue, 0.01f)) {
-            CurrentObject.Element.Scale = Util.FloatArrToVec(ScaleValue);
-            ObjectManager.ComponentInternalUpdate(CurrentObject.Element);
-        }
-
-        if (ImGui.button("CUM BUTTON!!!")) {
-            Test2_Layer.IntersectionPoints.clear();
-            long s = System.currentTimeMillis();
-            System.out.println(" " + Operations.InMeshX(CurrentObject.Element, new Vector3f(cum[0],cum[1], cum[2])) );
-            System.out.println("Time Taken: " + (System.currentTimeMillis() - s) + "ms");
-        }
-        if (ImGui.inputFloat3("Cum", cum)) {}
-        Gizmo.PushSphereGizmo(new Vector3f(cum[0],cum[1], cum[2]), 0.2f);
-
-        if (ImGui.button("CUMSHOT ")) {
-
-        }
         ////////////
 
-        if (ImGui.beginTabBar("ObjectOptions")) {
-
-            if (ImGui.beginTabItem("Shading")) {
-                if (ImGui.isItemClicked()) {
-                    System.out.println("Click");
-                    ResetMaterialValues();
-                }
-
-                if (ImGui.combo("Shader", ShaderIndex, ShaderManager.GetShaderList())) {
-                    CurrentObject.Element.Shader = ShaderManager.Shaders.get(ShaderManager.GetShaderList()[ShaderIndex.get()]);
-                }
-
-                if (ImGui.colorEdit3("Ambient", AmbientValue)) {
-                    CurrentObject.Element.Material.Ambient = Util.FloatArrToVec(AmbientValue);
-                }
-
-                if (ImGui.colorEdit3("Diffuse", DiffuseValue)) {
-                    CurrentObject.Element.Material.Diffuse = Util.FloatArrToVec(DiffuseValue);
-                }
-
-                if(ImGui.colorEdit3("Specular", SpecularValue)) {
-                    CurrentObject.Element.Material.Specular = Util.FloatArrToVec(SpecularValue);
-                }
-
-                if (ImGui.dragFloat("Shininess", ShininessValue.getData(), 0.1f, 0.0f, 256f, "%.1f", ImGuiSliderFlags.Logarithmic)) {
-                    CurrentObject.Element.Material.Shininess = ShininessValue.get();
-                }
-
-                ImGui.endTabItem();
-            }
+        if (ImGui.beginTabBar("Components")) {
 
             for (Component Comp : CurrentObject.Element.Components) {
                 Comp.GUI();
             }
-            while (!DeletionQueue.isEmpty()) {
-                DeletionQueue.poll().Delete();
-            }
 
-            if (ImGui.tabItemButton("+")) {
+            if (!CurrentObjIsRoot && ImGui.tabItemButton("+")) {
                 AddComponent = true;
             }
 
@@ -400,11 +312,11 @@ public class Browser_Layer implements Layer {
     }
 
     private String[] GetChildNodeArray(ObjectTree Node) {
-        String[] Children = new String[Math.max(Node.ChildCount(), 8)];
+        String[] Children = new String[Math.max(Node.Children.size(), 8)];
 
         for (int i = 0; i < Children.length; i++) {
-            if (i < Node.ChildCount()) {
-                String ChildName = Node.GetChild(i).Element.Name;
+            if (i < Node.Children.size()) {
+                String ChildName = Node.Children.get(i).Element.Name;
                 if (ChildName == null) {
                     ChildName = "No Name";
                 }

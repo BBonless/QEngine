@@ -3,50 +3,29 @@ package Root.GUI.Layers;
 import Root.GUI.Layer;
 import Root.Simulation.Preferences;
 import Root.Simulation.SimEngine;
+import Root.Textures.Texture;
 import imgui.ImGui;
 import imgui.flag.ImGuiSliderFlags;
 import imgui.type.ImBoolean;
 
 public class SimulationPreferences_Layer implements Layer {
 
+    private Texture RestartTexture;
+    private Texture PlayTexture;
+    private Texture PauseTexture;
+    private Texture StepTexture;
+
+
     public static ImBoolean PlaySim = new ImBoolean(false);
 
-    //region Spawning
-    float[] SpawnBlockLocationValues = new float[] {0,0,0};
-    int[] SpawnBlockSizeXValue = new int[] {10};
-    int[] SpawnBlockSizeYValue = new int[] {10};
-    int[] SpawnBlockSizeZValue = new int[] {10};
-    float[] SpawnBlockGapValues = new float[] {1.25f};
-    //endregion
+    private ImBoolean Advanced = new ImBoolean(false);
 
-    //region Simulation
-    float[] TimestepValue = new float[] {0.025f};
-    float[] SmoothingRadiusValue = new float[] {0.7f};
-    int[] SimulationIterationsValue = new int[] {1};
-    int[] SolverIterationsValue = new int[] {3};
-    //endregion
-
-    //region Particle
-    float[] MassValue = new float[] {100};
-    float[] StiffnessValue = new float[] {50};
-    float[] ViscosityValue = new float[] {0.07f};
-    float[] RestDensityValue = new float[] {30};
-    //endregion
-
-    //region World
-    float[] BoundarySizeValues = new float[] {50,50,50};
-    float[] BoundaryMaxSize = new float[] {200};
-    float[] BoundaryElasticityValue = new float[] {0.1f};
-    float[] GravityValues = new float[] {0,-9.81f,0};
-    //endregion
-
-    //region Grid
-    int[] GridXValue = new int[] {40};
-    int[] GridYValue = new int[] {40};
-    int[] GridZValue = new int[] {40};
-    //endregion
-
-    public static ImBoolean Advanced = new ImBoolean(false);
+    public SimulationPreferences_Layer() {
+        RestartTexture = new Texture("/Icons/Restart32.png");
+        PlayTexture = new Texture("/Icons/Play32.png");
+        PauseTexture = new Texture("/Icons/Pause32.png");
+        StepTexture = new Texture("/Icons/Step32.png");
+    }
 
     @Override
     public void Render_ImGUI() {
@@ -54,82 +33,86 @@ public class SimulationPreferences_Layer implements Layer {
 
         ImGui.pushItemWidth(160);
 
-        if (ImGui.button("Init")) {
-            SimEngine.Init();
+        float CenterOffset = 0;
+        if (PlaySim.get()) {
+            CenterOffset = (ImGui.getWindowSizeX() / 4) + 32 + 5;
+        }
+        else {
+            CenterOffset = (ImGui.getWindowSizeX() / 4) + 8 + 5;
         }
 
-        ImGui.sameLine();
-        if (ImGui.button("Reset")) {
+        ImGui.sameLine(CenterOffset);
+        if (ImGui.imageButton(RestartTexture.Handle, 32, 32)) {
             SimEngine.Reset();
         }
 
         ImGui.sameLine();
-        if (ImGui.button("Step") && PlaySim.get() == false) {
-            SimEngine.ParticleObject.SetInstanced( SimEngine.Step() );
-            SimEngine.ParticleObject.Mesh.UpdateInstanceBuffer();
-        }
+        if (PlaySim.get()) {
+            if (ImGui.imageButton(PauseTexture.Handle, 32, 32)) {
+                PlaySim.set(false);
+            }
+        } else {
+            if (ImGui.imageButton(PlayTexture.Handle, 32, 32)) {
+                PlaySim.set(true);
+            }
 
-        ImGui.checkbox("Play?", PlaySim);
+            ImGui.sameLine();
+            if (ImGui.imageButton(StepTexture.Handle, 32, 32)) {
+                SimEngine.FluidParticleObject.SetInstanced( SimEngine.Step() );
+                SimEngine.FluidParticleObject.Mesh.UpdateInstanceBuffer();
+            }
+            if (ImGui.isItemHovered()) {
+                ImGui.setTooltip("Steps the simulation by one frame");
+            }
+        }
 
         if (ImGui.treeNode("Preferences")) {
             if (ImGui.treeNode("Spawning")) {
 
-                if (ImGui.dragFloat3("Spawn Block Location", SpawnBlockLocationValues)) {
-                    Preferences.ParticleSpawnPoint.x = SpawnBlockLocationValues[0];
-                    Preferences.ParticleSpawnPoint.y = SpawnBlockLocationValues[1];
-                    Preferences.ParticleSpawnPoint.z = SpawnBlockLocationValues[2];
-                }
+                ImGui.dragFloat3("Spawn Block Location", Preferences.ParticleSpawnPoint);
                 if (ImGui.isItemHovered()) {
                     ImGui.setTooltip("Sets the position of the particle block");
                 }
 
-                if (ImGui.dragInt("Spawn Block X Size", SpawnBlockSizeXValue, 0.1f, 1, 100000)) {
-                    Preferences.ParticleBlockSizeX = SpawnBlockSizeXValue[0];
+                if (ImGui.dragInt("Spawn Block X Size", Preferences.ParticleBlockSizeX, 0.1f, 1, 100000)) {
+                    SimEngine.FluidParticleObject.SetInstanced(SimEngine.Preview());
                 }
                 if (ImGui.isItemHovered()) {
                     ImGui.setTooltip("Sets how many particles will be spawned on the X axis");
                 }
 
-                if (ImGui.dragInt("Spawn Block Y Size", SpawnBlockSizeYValue, 0.1f, 1, 100000)) {
-                    Preferences.ParticleBlockSizeY = SpawnBlockSizeYValue[0];
+                if (ImGui.dragInt("Spawn Block Y Size", Preferences.ParticleBlockSizeY, 0.1f, 1, 100000)) {
+                    SimEngine.FluidParticleObject.SetInstanced(SimEngine.Preview());
                 }
                 if (ImGui.isItemHovered()) {
                     ImGui.setTooltip("Sets how many particles will be spawned on the Y axis");
                 }
 
-                if (ImGui.dragInt("Spawn Block Z Size", SpawnBlockSizeZValue, 0.1f, 1, 100000)) {
-                    Preferences.ParticleBlockSizeZ = SpawnBlockSizeZValue[0];
+                if (ImGui.dragInt("Spawn Block Z Size", Preferences.ParticleBlockSizeZ, 0.1f, 1, 100000)) {
+                    SimEngine.FluidParticleObject.SetInstanced(SimEngine.Preview());
                 }
                 if (ImGui.isItemHovered()) {
                     ImGui.setTooltip("Sets how many particles will be spawned on the Z axis");
                 }
 
-                if (ImGui.dragFloat("Particle Spacing", SpawnBlockGapValues, 0.01f)) {
-                    Preferences.ParticleBlockGap = SpawnBlockGapValues[0];
-                }
+                ImGui.dragFloat("Particle Spacing", Preferences.ParticleBlockGap, 0.01f);
                 if (ImGui.isItemHovered()) {
                     ImGui.setTooltip("Sets how far apart each particle is from eachother when spawned");
                 }
-
-                Preferences.UpdateSize();
 
                 ImGui.treePop();
             }
 
             if (ImGui.treeNode("Simulation")) {
 
-                if (ImGui.sliderFloat("Timestep", TimestepValue, 0.001f, 0.025f, "%.3f")) {
-                    Preferences.Timestep = TimestepValue[0];
-                }
+                ImGui.sliderFloat("Timestep", Preferences.Timestep, 0.001f, 0.025f, "%.3f");
                 if (ImGui.isItemHovered()) {
                     ImGui.setTooltip("Sets the gap in time between each frame.");
                 }
 
                 if (Advanced.get()) {
                     if (ImGui.treeNode("Override Slider")) {
-                        if (ImGui.dragFloat("Timestep", TimestepValue, 0.001f)) {
-                            Preferences.Timestep = TimestepValue[0];
-                        }
+                        ImGui.dragFloat("Timestep", Preferences.Timestep, 0.001f);
 
                         ImGui.treePop();
                     }
@@ -138,24 +121,19 @@ public class SimulationPreferences_Layer implements Layer {
                     }
                 }
 
-                if (ImGui.dragFloat("Influence Radius", SmoothingRadiusValue, 0.01f, 0, BoundaryMaxSize[0], "%.2f")) {
-                    Preferences.SmoothingRadius = SmoothingRadiusValue[0];
+                if (ImGui.dragFloat("Influence Radius", Preferences.SmoothingRadius, 0.01f, 0, 100000, "%.2f")) {
                     Preferences.UpdateRadius();
                 }
                 if (ImGui.isItemHovered()) {
                     ImGui.setTooltip("Sets the maximum distance that particles will have an effect on each other.\nHigher values may cost performance.");
                 }
 
-                if (ImGui.dragInt("Simulation Iterations", SimulationIterationsValue, 0.1f)) {
-                    Preferences.SimulationIterations = SimulationIterationsValue[0];
-                }
+                ImGui.dragInt("Simulation Iterations", Preferences.SimulationIterations, 0.1f);
                 if (ImGui.isItemHovered()) {
                     ImGui.setTooltip("Sets how many times the simulation will be ran before displaying a new frame.\nYou can use this to change the speed of the simulation, but it also means it will perform the simulation more than once, so performance will decrease.");
                 }
 
-                if (ImGui.dragInt(Advanced.get() ? "Solver Iterations" : "Quality", SolverIterationsValue, 0.1f)) {
-                    Preferences.SolverIterations = SolverIterationsValue[0];
-                }
+                ImGui.dragInt(Advanced.get() ? "Solver Iterations" : "Quality", Preferences.SolverIterations, 0.1f);
                 if (ImGui.isItemHovered()) {
                     ImGui.setTooltip("Sets how many times to repeat the particle's physics calculations.\nHigher usually means higher accuracy simulations, but at the cost of performance");
                 }
@@ -165,30 +143,22 @@ public class SimulationPreferences_Layer implements Layer {
 
             if (ImGui.treeNode("Particle")) {
 
-                if (ImGui.dragFloat("Mass", MassValue)) {
-                    Preferences.ParticleMass = MassValue[0];
-                }
+                ImGui.dragFloat("Mass", Preferences.ParticleMass);
                 if (ImGui.isItemHovered()) {
                     ImGui.setTooltip("Sets the mass of the particles");
                 }
 
-                if (ImGui.dragFloat("Stiffness", StiffnessValue)) {
-                    Preferences.Stiffness = StiffnessValue[0];
-                }
+                ImGui.dragFloat("Stiffness", Preferences.Stiffness);
                 if (ImGui.isItemHovered()) {
                     ImGui.setTooltip("Sets how much influence particles have on each other (Pressure)");
                 }
 
-                if (ImGui.dragFloat("Viscosity", ViscosityValue, 0.00025f, 0, Float.POSITIVE_INFINITY, "%.5f")) {
-                    Preferences.ParticleViscosity = ViscosityValue[0];
-                }
+                ImGui.dragFloat("Viscosity", Preferences.ParticleViscosity, 0.00025f, 0, Float.POSITIVE_INFINITY, "%.5f");
                 if (ImGui.isItemHovered()) {
                     ImGui.setTooltip("Sets the viscosity of the particles");
                 }
 
-                if (ImGui.dragFloat("Rest Density", RestDensityValue)) {
-                    Preferences.RestDensity = RestDensityValue[0];
-                }
+                ImGui.dragFloat("Rest Density", Preferences.RestDensity);
                 if (ImGui.isItemHovered()) {
                     ImGui.setTooltip("Sets the the minimum density of the particles");
                 }
@@ -198,33 +168,21 @@ public class SimulationPreferences_Layer implements Layer {
 
             if (ImGui.treeNode("World")) {
 
-                if (ImGui.sliderFloat3("Boundary Dimensions", BoundarySizeValues, 0, BoundaryMaxSize[0], "%.0f", ImGuiSliderFlags.AlwaysClamp)) {
-                    Preferences.BoundarySize.x = BoundarySizeValues[0];
-                    Preferences.BoundarySize.y = BoundarySizeValues[1];
-                    Preferences.BoundarySize.z = BoundarySizeValues[2];
+                if (ImGui.dragFloat3("Boundary Dimensions", Preferences.BoundarySize, 1, 0, 100000, "%.0f", ImGuiSliderFlags.AlwaysClamp)) {
                     SimEngine.UpdateGrid();
                 }
                 if (ImGui.isItemHovered()) {
                     ImGui.setTooltip("Sets the dimensions of the box that contains the particles");
                 }
 
-                ImGui.dragFloat("Maximum Size", BoundaryMaxSize, 1, 0, 10000);
-                if (ImGui.isItemHovered()) {
-                    ImGui.setTooltip("Sets the maximum value for boundary dimensions");
-                }
-
-                if (ImGui.sliderFloat("Boundary Elasticity", BoundaryElasticityValue, 0, 1f, "%.2f")) {
-                    Preferences.BoundaryElasticity = BoundaryElasticityValue[0];
-                }
+                ImGui.sliderFloat("Boundary Elasticity", Preferences.BoundaryElasticity, 0, 1f, "%.2f");
                 if (ImGui.isItemHovered()) {
                     ImGui.setTooltip("Sets the ratio of energy that particles will lose upon collision with the bounding box");
                 }
 
                 if (Advanced.get()) {
                     if (ImGui.treeNode("Override Slider")) {
-                        if (ImGui.dragFloat("Boundary Elasticity", BoundaryElasticityValue, 0.001f)) {
-                            Preferences.BoundaryElasticity = BoundaryElasticityValue[0];
-                        }
+                        ImGui.dragFloat("Boundary Elasticity", Preferences.BoundaryElasticity, 0.001f);
 
                         ImGui.treePop();
                     }
@@ -233,29 +191,23 @@ public class SimulationPreferences_Layer implements Layer {
                     }
                 }
 
-                if (ImGui.dragFloat3("Gravity", GravityValues, 0.025f)) {
-                    Preferences.Gravity.x = GravityValues[0];
-                    Preferences.Gravity.y = GravityValues[1];
-                    Preferences.Gravity.z = GravityValues[2];
-                }
+                ImGui.dragFloat3("Gravity", Preferences.Gravity, 0.025f);
 
                 ImGui.treePop();
             }
 
             if (ImGui.treeNode("Grid")) {
 
-                if (ImGui.dragInt("Grid X Divisons", GridXValue, 0.05f)) {
-                    Preferences.GridX = GridXValue[0];
+                if (ImGui.dragInt("Grid X Divisons", Preferences.GridX, 0.05f)) {
                     SimEngine.UpdateGrid();
                 }
 
-                if (ImGui.dragInt("Grid Y Divisons", GridYValue, 0.05f)) {
-                    Preferences.GridY = GridYValue[0];
+                if (ImGui.dragInt("Grid Y Divisons", Preferences.GridY, 0.05f)) {
                     SimEngine.UpdateGrid();
                 }
 
-                if (ImGui.dragInt("Grid Z Divisons", GridZValue, 0.05f)) {
-                    Preferences.GridZ = GridZValue[0];
+
+                if (ImGui.dragInt("Grid Z Divisons", Preferences.GridZ, 0.05f)) {
                     SimEngine.UpdateGrid();
                 }
 

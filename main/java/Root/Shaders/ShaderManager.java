@@ -1,5 +1,9 @@
 package Root.Shaders;
 
+import Root.Misc.Util.Util;
+
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -11,16 +15,16 @@ public class ShaderManager {
         Shaders.put(
                 "Lit",
                 new ShaderProgram(
-                        ShaderProgram.LoadShaderResource("/LitInstanced.vert"),
-                        ShaderProgram.LoadShaderResource("/LitInstanced.frag")
+                        LoadShaderResource("/LitInstanced.vert"),
+                        LoadShaderResource("/LitInstanced.frag")
                 )
         );
 
         Shaders.put(
                 "Debug",
                 new ShaderProgram(
-                        ShaderProgram.LoadShaderResource("/Debug.vert"),
-                        ShaderProgram.LoadShaderResource("/Debug.frag")
+                        LoadShaderResource("/Debug.vert"),
+                        LoadShaderResource("/Debug.frag")
                 )
         );
     }
@@ -36,6 +40,24 @@ public class ShaderManager {
             ShaderList[Count++] = ShaderName;
         }
         return ShaderList;
+    }
+
+    public static String LoadShaderResource(String ResourceToken) {
+        try {
+            return Util.InputStreamToString(ShaderProgram.class.getResourceAsStream(ResourceToken));
+        } catch (Exception E) {
+            System.err.println("Could not read Shader at (Resource Token): " + ResourceToken + " !!");
+            return "";
+        }
+    }
+
+    public static String LoadShaderFile(String Path) {
+        try {
+            return Files.readString(Paths.get(Path));
+        } catch (Exception E) {
+            System.err.println("Could not read Shader at: " + Path + " !!");
+            return "";
+        }
     }
 
 }

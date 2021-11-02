@@ -8,7 +8,7 @@ public class ObjectTree {
 
     public ObjectTree Parent;
     public WorldObject Element;
-    private ArrayList<ObjectTree> Children = new ArrayList<>();
+    public ArrayList<ObjectTree> Children = new ArrayList<>();
 
     public void AddChild(ObjectTree NewNode) {
         NewNode.Parent = this;
@@ -28,18 +28,6 @@ public class ObjectTree {
 
     public boolean HasChildren() {
         return !Children.isEmpty();
-    }
-
-    public ObjectTree GetChild(int Index) {
-        return Children.get(Index);
-    }
-
-    public int ChildCount() {
-        return Children.size();
-    }
-
-    public ArrayList<ObjectTree> GetChildren() {
-        return Children;
     }
 
     public boolean ValidateName(String Name) {

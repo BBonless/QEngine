@@ -1,9 +1,13 @@
 package Root.Simulation;
 
 import Root.Engine;
+import Root.GUI.Layers.MeshGeneration_Layer;
 import Root.Geometry.Mesh;
 import Root.Geometry.SphereMesh;
+import Root.MeshGen.MarchingCubes;
+import Root.MeshGen.MarchingGrid;
 import Root.Shaders.Material;
+import Root.Shaders.ShaderManager;
 import Root.Shaders.ShaderProgram;
 import Root.Misc.Util.Util;
 import Root.Objects.WorldObject;
@@ -18,50 +22,63 @@ public class SimEngine {
     public static float[] ParticlePositions;
     private static int ParticleCounter = 0;
 
-    public static WorldObject ParticleObject;
+    public static WorldObject FluidParticleObject;
+    public static WorldObject FluidMeshObject;
 
     public static SpatialGrid Grid;
 
+    private static boolean ParticlesReady = false;
+
     public static void Init() {
-        if (ParticleObject != null) {
-            Engine.RenderQueue.remove(ParticleObject);
+        FluidMeshObject = new WorldObject();
+
+        if (FluidParticleObject != null) {
+            Engine.RenderQueue.remove(FluidParticleObject);
         }
 
-        Mesh ParticleMesh = SphereMesh.Generate(Preferences.ParticleDrawSize, 10, 8);
+        Mesh ParticleMesh = SphereMesh.Generate(Preferences.ParticleDrawSize[0], 10, 8);
 
-        ParticleObject = new WorldObject(ParticleMesh);
+        FluidParticleObject = new WorldObject(ParticleMesh);
 
-        ParticleObject.Material = new Material(
+        FluidParticleObject.Material = new Material(
                 new Vector3f(0.05f, 0.05f, 0.6f),
                 new Vector3f(0.05f, 0.05f, 0.6f),
                 new Vector3f(0.5f, 0.5f, 0.5f),
                 2f
         );
 
-        ParticleObject.Shader = new ShaderProgram(
-                ShaderProgram.LoadShaderResource("/LitInstanced.vert"),
-                ShaderProgram.LoadShaderResource("/LitInstanced.frag")
+        FluidParticleObject.Shader = new ShaderProgram(
+                ShaderManager.LoadShaderResource("/LitInstanced.vert"),
+                ShaderManager.LoadShaderResource("/LitInstanced.frag")
         );
 
-        ParticleObject.SetInstanced(dbdb());
+        FluidParticleObject.SetInstanced(Preview());
 
-        Engine.RenderQueue.add(ParticleObject);
+        Engine.RenderQueue.add(FluidParticleObject);
 
         UpdateGrid();
     }
 
     public static void UpdateGrid() {
-        Grid = new SpatialGrid(Preferences.BoundarySize, Preferences.GridX, Preferences.GridY, Preferences.GridZ);
+        Grid = new SpatialGrid(Util.FloatArrToVec(Preferences.BoundarySize), Preferences.GridX[0], Preferences.GridY[0], Preferences.GridZ[0]);
     }
 
     public static void Reset(){
-        DynamicParticles = new Particle[Preferences.ParticleBlockSize];
+        Preferences.UpdateSize();
+
+        DynamicParticles = new Particle[Preferences.ParticleBlockSize[0]];
         ParticlePositions = new float[DynamicParticles.length * 3];
 
         Particles_Spawn();
+
+        ParticlesReady = true;
     }
 
     public static float[] Step() {
+
+        if (!ParticlesReady) {
+            Reset();
+        }
 
         Grid.Clear();
         Grid.Fill(DynamicParticles);
@@ -72,14 +89,14 @@ public class SimEngine {
         }
         ParticleCounter = 0;
 
-        for (int i = 0; i < Preferences.SimulationIterations; i++) {
+        for (int i = 0; i < Preferences.SimulationIterations[0]; i++) {
 
             for (Particle P1 : DynamicParticles) {
                 //Find Neighbors
                 Particle_SetNeighborsGrid(P1);
             }
 
-            for (int j = 0; j < Preferences.SolverIterations; j++) {
+            for (int j = 0; j < Preferences.SolverIterations[0]; j++) {
 
                 //Set Density & Pressure
                 for (Particle P1 : DynamicParticles) {
@@ -104,36 +121,48 @@ public class SimEngine {
             }
         }
 
+        if (MeshGeneration_Layer.UpdateFluidMesh.get()) {
+            if (MeshGeneration_Layer.Overflow.get()) {
+                MarchingGrid.FillOverflow();
+            }
+            else {
+                MarchingGrid.Fill();
+            }
+            MarchingCubes.March();
+        }
+
         //System.out.println(ParticlePositions.length);
         return ParticlePositions;
     }
 
-    private static float[] dbdb() {
+    //Calculates the positions where the points will appear
+    public static float[] Preview() {
         int Count = 0;
-        float[] Results = new float[Preferences.ParticleBlockSize * 3];
-        for (int x = 0; x < Preferences.ParticleBlockSizeX; x++) {
-            for (int y = 0; y < Preferences.ParticleBlockSizeY; y++) {
-                for (int z = 0; z < Preferences.ParticleBlockSizeZ; z++) {
+        Preferences.UpdateSize();
+        float[] Points = new float[Preferences.ParticleBlockSize[0] * 3];
+        for (int x = 0; x < Preferences.ParticleBlockSizeX[0]; x++) {
+            for (int y = 0; y < Preferences.ParticleBlockSizeY[0]; y++) {
+                for (int z = 0; z < Preferences.ParticleBlockSizeZ[0]; z++) {
 
-                    Vector3f tpp = Preferences.GetSpawnPosition(x,y,z);
+                    Vector3f SpawnPosition = Preferences.GetSpawnPosition(x,y,z);
 
-                    Results[Count*3+0] = tpp.x;
-                    Results[Count*3+1] = tpp.y;
-                    Results[Count*3+2] = tpp.z;
+                    Points[Count*3+0] = SpawnPosition.x;
+                    Points[Count*3+1] = SpawnPosition.y;
+                    Points[Count*3+2] = SpawnPosition.z;
                     Count++;
 
                 }
             }
         }
-        return Results;
+        return Points;
     }
 
     private static void Particles_Spawn() {
         int Count = 0;
 
-        for (int x = 0; x < Preferences.ParticleBlockSizeX; x++) {
-            for (int y = 0; y < Preferences.ParticleBlockSizeY; y++) {
-                for (int z = 0; z < Preferences.ParticleBlockSizeZ; z++) {
+        for (int x = 0; x < Preferences.ParticleBlockSizeX[0]; x++) {
+            for (int y = 0; y < Preferences.ParticleBlockSizeY[0]; y++) {
+                for (int z = 0; z < Preferences.ParticleBlockSizeZ[0]; z++) {
 
                     Particle NewParticle = new Particle();
 
@@ -174,18 +203,18 @@ public class SimEngine {
             if (P1 == P2) { continue; }
 
             if (Util.DistanceSquared(P1, P2) <= Preferences.SmoothingRadiusSqr) {
-                P1.Density += Preferences.ParticleMass * Kernels.Poly6(P1, P2);
+                P1.Density += Preferences.ParticleMass[0] * Kernels.Poly6(P1, P2);
             }
         }
 
         //Density must be >= RestDensity
-        if (P1.Density < Preferences.RestDensity) {
-            P1.Density = Preferences.RestDensity;
+        if (P1.Density < Preferences.RestDensity[0]) {
+            P1.Density = Preferences.RestDensity[0];
         }
         //endregion
 
         //region Pressure
-        P1.Pressure = Preferences.Stiffness * (P1.Density - Preferences.RestDensity);
+        P1.Pressure = Preferences.Stiffness[0] * (P1.Density - Preferences.RestDensity[0]);
         //endregion
     }
 
@@ -203,7 +232,7 @@ public class SimEngine {
 
             ViscosityGradient.add(Physics_ComputeViscosityForce(P1, P2));
         }
-        P1.Force.add(PressureGradient).add(ViscosityGradient).add(Preferences.Gravity).add(Util.RandomVector(1).mul(0.1f));
+        P1.Force.add(PressureGradient).add(ViscosityGradient).add(Util.FloatArrToVec(Preferences.Gravity)).add(Util.RandomVector(1).mul(0.1f));
     }
 
     private static void Particle_Integrate(Particle P1) {
@@ -213,17 +242,17 @@ public class SimEngine {
 
         Vector3f NewVelocity = new Vector3f(0,0,0);
         P1.PastAcceleration.add(P1.Force, NewVelocity);
-        P1.Velocity.add( NewVelocity.mul(0.5f).mul(Preferences.Timestep) );
+        P1.Velocity.add( NewVelocity.mul(0.5f).mul(Preferences.Timestep[0]) );
 
         Vector3f DeltaPosition = new Vector3f(0,0,0);
 
         Vector3f AuxForce = new Vector3f(0,0,0);
         P1.Force.get(AuxForce);
-        AuxForce.mul(Preferences.Timestep * Preferences.Timestep * 0.5f);
+        AuxForce.mul(Preferences.Timestep[0] * Preferences.Timestep[0] * 0.5f);
 
         Vector3f AuxVel = new Vector3f(0,0,0);
         P1.Velocity.get(AuxVel);
-        AuxVel.mul(Preferences.Timestep);
+        AuxVel.mul(Preferences.Timestep[0]);
         AuxVel.add(AuxForce, DeltaPosition);
 
         P1.Position.add(DeltaPosition);
@@ -231,58 +260,60 @@ public class SimEngine {
 
         Particle_EnforceBoundary(P1);
 
-
         ParticlePositions[ParticleCounter*3+0] = P1.Position.x;
         ParticlePositions[ParticleCounter*3+1] = P1.Position.y;
         ParticlePositions[ParticleCounter*3+2] = P1.Position.z;
         ParticleCounter++;
+        if (ParticleCounter >= ParticlePositions.length / 3) {
+            ParticleCounter = 0;
+        }
     }
     
     private static void Particle_EnforceBoundary(Particle P1) {
 
-        if ( P1.Position.x < Preferences.BoundarySize.x / -2 )
+        if ( P1.Position.x < Preferences.BoundarySize[0] / -2 )
         {
-            P1.Position.x = (Preferences.BoundarySize.x / -2) + 0.001f;
-            P1.Velocity.x = -P1.Velocity.x * Preferences.BoundaryElasticity;
+            P1.Position.x = (Preferences.BoundarySize[0] / -2) + 0.001f;
+            P1.Velocity.x = -P1.Velocity.x * Preferences.BoundaryElasticity[0];
             //P1.Velocity.mul(Preferences.BoundaryElasticity * -1);
             P1.Force.x = 0;
         }
-        else if ( P1.Position.x > Preferences.BoundarySize.x / 2 )
+        else if ( P1.Position.x > Preferences.BoundarySize[0] / 2 )
         {
-            P1.Position.x = (Preferences.BoundarySize.x / 2) - 0.001f;
-            P1.Velocity.x = -P1.Velocity.x * Preferences.BoundaryElasticity;
+            P1.Position.x = (Preferences.BoundarySize[0] / 2) - 0.001f;
+            P1.Velocity.x = -P1.Velocity.x * Preferences.BoundaryElasticity[0];
             //P1.Velocity.mul(Preferences.BoundaryElasticity * -1);
             P1.Force.x = 0;
         }
 
-        if ( P1.Position.y < Preferences.BoundarySize.y / -2 )
+        if ( P1.Position.y < Preferences.BoundarySize[1] / -2 )
         {
-            P1.Position.y = (Preferences.BoundarySize.y / -2) + 0.001f;
-            P1.Velocity.y = (-P1.Velocity.y * Preferences.BoundaryElasticity) + 1;
+            P1.Position.y = (Preferences.BoundarySize[1] / -2) + 0.001f;
+            P1.Velocity.y = (-P1.Velocity.y * Preferences.BoundaryElasticity[0]) + 1;
             //P1.Velocity.mul(Preferences.BoundaryElasticity * -1);
             P1.Force.y = 0;
 
             //P1.Velocity.add(new Vector3f(0, 1, 0));  //Pushes particles slighlty upwards so they don't compress at the bottom
         }
-        else if ( P1.Position.y > Preferences.BoundarySize.y / 2 )
+        else if ( P1.Position.y > Preferences.BoundarySize[1] / 2 )
         {
-            P1.Position.y = (Preferences.BoundarySize.y / 2) - 0.001f;
-            P1.Velocity.y = -P1.Velocity.y * Preferences.BoundaryElasticity;
+            P1.Position.y = (Preferences.BoundarySize[1] / 2) - 0.001f;
+            P1.Velocity.y = -P1.Velocity.y * Preferences.BoundaryElasticity[0];
             //P1.Velocity.mul(Preferences.BoundaryElasticity * -1);
             P1.Force.y = 0;
         }
 
-        if ( P1.Position.z < Preferences.BoundarySize.z / -2 )
+        if ( P1.Position.z < Preferences.BoundarySize[2] / -2 )
         {
-            P1.Position.z = (Preferences.BoundarySize.z / -2) + 0.001f;
-            P1.Velocity.z = (-P1.Velocity.z * Preferences.BoundaryElasticity) + 1;
+            P1.Position.z = (Preferences.BoundarySize[2] / -2) + 0.001f;
+            P1.Velocity.z = (-P1.Velocity.z * Preferences.BoundaryElasticity[0]) + 1;
             //P1.Velocity.mul(Preferences.BoundaryElasticity * -1);
             P1.Force.z = 0;
         }
-        else if ( P1.Position.z > Preferences.BoundarySize.z / 2 )
+        else if ( P1.Position.z > Preferences.BoundarySize[2] / 2 )
         {
-            P1.Position.z = (Preferences.BoundarySize.z / 2) - 0.001f;
-            P1.Velocity.z = -P1.Velocity.z * Preferences.BoundaryElasticity;
+            P1.Position.z = (Preferences.BoundarySize[2] / 2) - 0.001f;
+            P1.Velocity.z = -P1.Velocity.z * Preferences.BoundaryElasticity[0];
             //P1.Velocity.mul(Preferences.BoundaryElasticity * -1);
             P1.Force.z = 0;
         }
@@ -293,13 +324,13 @@ public class SimEngine {
         float Dividend = P1.Pressure + P2.Pressure;
         float Divisor = 2 * P1.Density * P2.Density;
 
-        return Kernels.SpikyGrad(P1, P2).mul(-Preferences.ParticleMass * (Dividend / Divisor));
+        return Kernels.SpikyGrad(P1, P2).mul(-Preferences.ParticleMass[0] * (Dividend / Divisor));
     }
 
     public static Vector3f Physics_ComputeViscosityForce(Particle P1, Particle P2) {
         Vector3f DeltaVelocity = new Vector3f(0,0,0);
         P1.Velocity.sub(P2.Velocity, DeltaVelocity);
 
-        return DeltaVelocity.mul( -Preferences.ParticleViscosity * (Preferences.ParticleMass / P1.Density) * Kernels.Laplacian(P1, P2) );
+        return DeltaVelocity.mul( -Preferences.ParticleViscosity[0] * (Preferences.ParticleMass[0] / P1.Density) * Kernels.Laplacian(P1, P2) );
     }
 }

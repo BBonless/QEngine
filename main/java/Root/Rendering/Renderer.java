@@ -17,25 +17,26 @@ public class Renderer {
 
     public static ShaderProgram CurrentShader;
 
-    public static Camera Cam;
+    public static Camera Camera;
 
     public static LightSource_Component Light;
 
     public static void Init() {
-        Cam = new Camera(
+        Camera = new Camera(
                 45f,
                 new Vector2f(1600f, 900f),
                 0.1f,
                 1000f
         );
 
-        Cam.Position = new Vector3f(0, 0, 3);
+        Camera.Position = new Vector3f(0, 25, 50);
+        Camera.Rotation = new Vector3f(22.5f, 0, 0);
     }
 
     public static Matrix4f GetMVP(WorldObject Object) {
         Matrix4f MVP = new Matrix4f().identity();
 
-        Cam.GetProjectionMatrix().mul( Cam.GetViewMatrix(), MVP );
+        Camera.GetProjectionMatrix().mul( Camera.GetViewMatrix(), MVP );
         MVP.mul( Object.GetModelMatrix() );
 
         return MVP;
@@ -76,6 +77,10 @@ public class Renderer {
         }
 
         Object.Material.Upload(CurrentShader);
+
+        CurrentShader.SetUniform("CamUp", Camera.GetUpVector(), UniformTypes.VEC3);
+
+        CurrentShader.SetUniform("CamRight", Camera.GetRightVector(), UniformTypes.VEC3);
 
         CurrentShader.SetUniform("viewPos", Camera.Position, UniformTypes.VEC3); //Hmmm
 

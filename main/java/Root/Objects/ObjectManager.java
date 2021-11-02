@@ -1,6 +1,8 @@
 package Root.Objects;
 
 import Root.Engine;
+import Root.GUI.Layers.Browser_Layer;
+import Root.Geometry.CubeMesh;
 import Root.Misc.Structures.ObjectTree;
 import Root.Objects.Components.*;
 import Root.Geometry.SphereMesh;
@@ -10,15 +12,14 @@ import org.joml.Vector3f;
 
 public class ObjectManager {
 
-    public static ObjectTree Tree = new ObjectTree(new WorldObject("Root"));
+    public enum ObjectType {
+        DebugBox,
+        Sphere,
+        Empty,
+        Import
+    }
 
-    public static String[] ComponentTypes = new String[] {
-            "Light Source Component",
-            "Inflow Component",
-            "Outflow Component",
-            "Collision Component",
-            "Debug Component"
-    };
+    public static ObjectTree Tree = new ObjectTree(new WorldObject("Root"));
 
     private static void CreateLightObject() {
         WorldObject Light = new WorldObject("Light");
@@ -40,6 +41,49 @@ public class ObjectManager {
         Tree.AddChild(Light);
     }
 
+    public static WorldObject AddObject(ObjectType Type) {
+        WorldObject NewObject;
+
+        switch (Type) {
+            case Empty:
+            case Import:
+                NewObject = new WorldObject();
+                break;
+            case DebugBox:
+                NewObject = new WorldObject(CubeMesh.Generate());
+                break;
+            case Sphere:
+                NewObject = new WorldObject(SphereMesh.Generate(1, 12, 10));
+                break;
+            default:
+                throw new RuntimeException("Impossible Object Type");
+        }
+
+        switch (Type) {
+            case Import:
+                NewObject.Name = "Import Object";
+                break;
+            case DebugBox:
+            case Sphere:
+            case Empty:
+                NewObject.Name = "New Object";
+                break;
+        }
+
+        ObjectTree NewObjectNode = new ObjectTree(NewObject);
+
+        Browser_Layer.CurrentObject.AddChild(NewObjectNode);
+        NewObject.Container = NewObjectNode;
+
+        new Transform_Component().Attach(NewObject);
+
+        new Shading_Component().Attach(NewObject);
+
+        Engine.RenderQueue.add(NewObject);
+
+        return NewObject;
+    }
+
     public static void DeleteObject(WorldObject Target) {
         Engine.RenderQueue.remove(Target);
 
@@ -48,28 +92,6 @@ public class ObjectManager {
         }
 
         Target = null;
-    }
-
-    public static void AddComponent(WorldObject Target, int Component) {
-        switch (Component) {
-            case 0:
-                new LightSource_Component().Attach(Target);
-                break;
-            case 1:
-                new Inflow_Component().Attach(Target);
-                break;
-            case 2:
-                new Outflow_Component().Attach(Target);
-                break;
-            case 3:
-                new Collision_Component().Attach(Target);
-                break;
-            case 4:
-                new Debug_Component().Attach(Target);
-                break;
-            default:
-                break;
-        }
     }
 
     public static void ComponentInternalUpdate(WorldObject Target) {
@@ -88,7 +110,7 @@ public class ObjectManager {
         }
 
         if (Node.HasChildren()) {
-            for (ObjectTree Child : Node.GetChildren()) {
+            for (ObjectTree Child : Node.Children) {
                 ComponentUpdate(Child);
             }
         }

@@ -19,6 +19,7 @@ public class Outflow_Component extends Component {
 
     public Outflow_Component() {
         Name = "Outflow";
+        Type = ComponentManager.ComponentType.Outflow;
     }
 
     public void Suck() {

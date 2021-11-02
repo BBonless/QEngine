@@ -21,13 +21,10 @@ public class Mesh {
     public float[] VertexNormData;
     public float[] VertexTexCoordData;
 
-    public Vector3f Max;
-    public Vector3f Min;
-
     public int[]    Indices;
     public int VAO, VBO, IBO; //Vertex Array Object, Vertex Buffer Object, Instance Vertex Buffer Object, Index Buffer Object
 
-    public int IVBO, IVBOSize;
+    public int IVBO;
     public float[] InstanceData;
 
     public Matrix4f Matrix = new Matrix4f().identity();
@@ -35,8 +32,12 @@ public class Mesh {
     //region Constructors
 
     public Mesh(float[] VertexDataIn, int[] IndicesIn) {
-        VertexData = VertexDataIn;
+        VertexPosData = VertexDataIn;
+        VertexNormData = new float[VertexPosData.length];
+        VertexTexCoordData = new float[(VertexPosData.length / 3) * 2];
         Indices = IndicesIn;
+
+        Interleave();
 
         Initialize();
     }
@@ -101,7 +102,7 @@ public class Mesh {
             VertexData[i*8+7] = VertexTexCoordData[i*2+1];
         }
 
-        //Free memory
+        //"Free memory"
         VertexPosData = null;
         VertexNormData = null;
         VertexTexCoordData = null;

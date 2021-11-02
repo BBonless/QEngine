@@ -88,4 +88,25 @@ public class MathU {
         return true;
     }
 
+    public static Vector3f Midpoint(Vector3f Vec1, Vector3f Vec2) {
+        return new Vector3f(
+                (Vec1.x + Vec2.x) / 2,
+                (Vec1.y + Vec2.y) / 2,
+                (Vec1.z + Vec2.z) / 2
+        );
+    }
+
+    public static boolean VectorLessThan(Vector3f Vec1, Vector3f Vec2) {
+        if (Vec1.x < Vec2.x) {
+            return true;
+        }
+        if (Vec1.y < Vec2.y) {
+            return true;
+        }
+        if (Vec1.z < Vec2.z) {
+            return true;
+        }
+        return false;
+    }
+
 }

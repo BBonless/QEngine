@@ -9,7 +9,6 @@ import java.util.ArrayList;
 public class Particle {
 
     public Vector3f Position = new Vector3f(0,0,0);
-    public Vector3f PastPosition = new Vector3f(0,0,0);
 
     public Vector3f Velocity = new Vector3f(0,0,0);
     public Vector3f PastAcceleration = new Vector3f(0,0,0);
@@ -20,17 +19,14 @@ public class Particle {
 
     public ArrayList<Particle> Neighbors = new ArrayList<>();
 
+    public boolean DoNotMeshify = false;
+
     public FloatBuffer GetBuffer(MemoryStack Stack) {
         FloatBuffer Buffer = Stack.callocFloat(17);
 
         Buffer.put(0, Position.x);
         Buffer.put(1, Position.y);
         Buffer.put(2, Position.z);
-
-        Buffer.put(3, PastPosition.x);
-        System.out.println(Buffer.capacity());
-        Buffer.put(4, PastPosition.y);
-        Buffer.put(5, PastPosition.z);
 
         Buffer.put(6, Velocity.x);
         Buffer.put(7, Velocity.y);

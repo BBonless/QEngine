@@ -83,8 +83,8 @@ public class GPUTesting_Layer implements Layer {
         float[] kakusei = BufferU.FloatBuffer2Array(OutPositions);
 
 
-        SimEngine.ParticleObject.SetInstanced( kakusei );
-        SimEngine.ParticleObject.Mesh.UpdateInstanceBuffer();
+        SimEngine.FluidParticleObject.SetInstanced( kakusei );
+        SimEngine.FluidParticleObject.Mesh.UpdateInstanceBuffer();
 
         Feedback(Output);
 

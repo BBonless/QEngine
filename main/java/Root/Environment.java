@@ -4,6 +4,7 @@ import Root.Compute.GPU;
 import Root.GUI.Canvas;
 import Root.GUI.Layers.*;
 import Root.Geometry.Mesh;
+import Root.MeshGen.MarchingGrid;
 import Root.Objects.ObjectManager;
 import Root.Objects.WorldObject;
 import Root.Rendering.Gizmo;
@@ -11,9 +12,13 @@ import Root.Shaders.Material;
 import Root.Shaders.ShaderManager;
 import Root.Simulation.Kernels;
 import Root.Simulation.Preferences;
+import Root.Simulation.SimEngine;
 import Root.Textures.NullTexture;
+import Root.Textures.Texture;
 import org.joml.Random;
 import org.joml.Vector3f;
+
+import java.awt.*;
 
 public class Environment {
 
@@ -24,9 +29,21 @@ public class Environment {
 
     public static WorldObject ISphereWO;
 
-    public Environment() {
+    public static void main(String[] args) {
+
+        if (SplashScreen.getSplashScreen() != null) {
+            SplashScreen.getSplashScreen().close();
+        }
 
         Start();
+
+        Engine.Start();
+
+    }
+
+    public Environment() {
+
+
 
         //region Floor
         /*Mesh Floor = new Mesh(
@@ -132,7 +149,6 @@ public class Environment {
         }
         //endregion
 
-        Engine.Start();
     }
 
     public static void Start() {
@@ -143,23 +159,27 @@ public class Environment {
         Canvas.Layers.add(new Performance_Layer());
         Canvas.Layers.add(new SimulationPreferences_Layer());
         Canvas.Layers.add(new SimulationStatistics_Layer());
+        Canvas.Layers.add(new MeshGeneration_Layer());
         Canvas.Layers.add(new Browser_Layer());
         Canvas.Layers.add(new GPUTesting_Layer());
         Canvas.Layers.add(new Test_Layer());
         Canvas.Layers.add(new Test2_Layer());
 
         ObjectManager.Init();
+
         ShaderManager.Init();
 
         Preferences.Init();
-        Kernels.Init(Preferences.SmoothingRadius);
+
+        Kernels.Init(Preferences.SmoothingRadius[0]);
+
         Gizmo.Init();
 
         GPU.Init();
 
         GPU.AddProgram("Solver", "C:\\Users\\quent\\IdeaProjects\\QEngine 5.0\\src\\main\\java\\Root\\Compute\\Programs\\tester.cl");
 
-        //SimEngine.Init();
+        SimEngine.Init();
 
         NullTexture.Create();
     }

@@ -158,6 +158,36 @@ public class SpatialGrid {
         return Result;
     }
 
+    public ArrayList<Particle> NeighborQueryMeshifyOnly(Vector3f Point, float Radius) {
+        ArrayList<Particle> Result = new ArrayList<>();
+
+        Vector3i Index = PositionIndex3D(Point);
+        int IndexXOffset = (int)Math.ceil( Radius / BucketSize.x );
+        int IndexYOffset = (int)Math.ceil( Radius / BucketSize.y );
+        int IndexZOffset = (int)Math.ceil( Radius / BucketSize.z );
+
+        for (int X = Index.x - IndexXOffset; X <= Index.x + IndexXOffset; X++) {
+            if (X < 0 || X > BucketsX - 1) {continue;}
+
+            for (int Y = Index.y - IndexYOffset; Y <= Index.y + IndexYOffset; Y++) {
+                if (Y < 0 || Y > BucketsY - 1) {continue;}
+
+                for (int Z = Index.z - IndexZOffset; Z <= Index.z + IndexZOffset; Z++) {
+                    if (Z < 0 || Z > BucketsZ - 1) {continue;}
+
+                    for (Particle PotentialNeighbor : Buckets.get(F3D(X,Y,Z))) {
+                        Vector3f DeltaPos = new Vector3f(0,0,0);
+                        PotentialNeighbor.Position.sub(Point, DeltaPos);
+                        if (DeltaPos.lengthSquared() < Radius*Radius && !PotentialNeighbor.DoNotMeshify) {
+                            Result.add(PotentialNeighbor);
+                        }
+                    }
+                }
+            }
+        }
+        return Result;
+    }
+
     public void NeighborQuery(Particle Target) {
         Target.Neighbors.clear();
 

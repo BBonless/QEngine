@@ -2,13 +2,13 @@ package Root;
 
 import Root.Compute.GPU;
 import Root.GUI.Canvas;
-import Root.GUI.Layers.Camera_Layer;
-import Root.GUI.Layers.GPUTesting_Layer;
-import Root.GUI.Layers.Performance_Layer;
-import Root.GUI.Layers.SimulationPreferences_Layer;
+import Root.GUI.Layers.*;
 import Root.GUI.Window;
-import Root.IO.Keyboard;
-import Root.IO.Mouse;
+import Root.IO.Control.Keyboard;
+import Root.IO.Control.Mouse;
+import Root.MeshGen.MarchingCell;
+import Root.MeshGen.MarchingGrid;
+import Root.MeshGen.MarchingPoint;
 import Root.Objects.ObjectManager;
 import Root.Objects.WorldObject;
 import Root.Rendering.Camera;
@@ -25,6 +25,7 @@ import org.lwjgl.*;
 import java.util.LinkedList;
 import java.util.List;
 
+import static Root.MeshGen.MarchingGrid.VertData;
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.GL40.*;
 
@@ -33,14 +34,7 @@ public class Engine {
     private static final boolean PFPS = true;
     public Window Window;
 
-    public static List<WorldObject> RenderQueue = new LinkedList<WorldObject>();
-
-    public static float FrameCounter = 0;
-    public static float OneSecondTimer = 0;
-    public static float PreviousTime = 0;
-
-    public static double FrameStartTime = 0;
-    public static float DeltaTime = 0;
+    public static List<WorldObject> RenderQueue = new LinkedList<>();
 
     public Engine() {
         Window = new Window();
@@ -54,12 +48,18 @@ public class Engine {
         Window.Destroy();
     }
 
+    public static Vector3f penis1; /*= new Vector3f(0);*/
+    public static Vector3f penis2; /*= new Vector3f(0);*/
+    public static Vector3f penis3; /*= new Vector3f(0);*/
+    public static Vector3f penis4; /*= new Vector3f(0);*/
+    public static Vector3f penis5; /*= new Vector3f(0);*/
+    public static Vector3f penis6; /*= new Vector3f(0);*/
+
     private void InternalUpdate() {
         glEnable(GL_DEPTH_TEST);
         glEnable(GL_TEXTURE_2D);
 
         while (!glfwWindowShouldClose(Window.Handle)) {
-            FrameStartTime = glfwGetTime();
 
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -105,35 +105,20 @@ public class Engine {
 
             glfwPollEvents();
 
-            DeltaTime = (float) (glfwGetTime() - FrameStartTime);
-
             Update();
         }
 
         GPU.Dispose();
     }
 
-    private void TrackFPS() {
-        FrameCounter++;
-        float CurrentTime = (float)glfwGetTime();
-        PreviousTime = CurrentTime;
-        if (CurrentTime - OneSecondTimer > 1.0) {
-            OneSecondTimer = CurrentTime;
-
-            Performance_Layer.SetData(FrameCounter, DeltaTime);
-
-            FrameCounter = 0;
-        }
-    }
-
     public void GUI_Update() {
         Camera_Layer.SetCamPos(Camera.Position);
         Camera_Layer.SetCamRot(Camera.Rotation);
-
-        TrackFPS();
     }
 
     public void Update() {
+
+        Performance_Layer.TrackFPS();
 
         if (ImGui.isKeyDown(GLFW_KEY_LEFT_SHIFT) || ImGui.isKeyDown(GLFW_KEY_RIGHT_SHIFT)) {
             Camera.Speed = Camera.BaseSpeed * 2;
@@ -146,16 +131,16 @@ public class Engine {
         }
 
         if (ImGui.isKeyDown(GLFW_KEY_W)) {
-            Camera.Position.add( Camera.GetForwardVector().mul(DeltaTime * Camera.Speed) );
+            Camera.Position.add( Camera.GetForwardVector().mul((float)Performance_Layer.Deltatime * Camera.Speed) );
         }
         if (Keyboard.Query(GLFW_KEY_A)) {
-            Camera.Position.sub( Camera.GetRightVector().mul(DeltaTime * Camera.Speed) );
+            Camera.Position.sub( Camera.GetRightVector().mul((float)Performance_Layer.Deltatime * Camera.Speed) );
         }
         if (Keyboard.Query(GLFW_KEY_S)) {
-            Camera.Position.sub( Camera.GetForwardVector().mul(DeltaTime * Camera.Speed) );
+            Camera.Position.sub( Camera.GetForwardVector().mul((float)Performance_Layer.Deltatime * Camera.Speed) );
         }
         if (Keyboard.Query(GLFW_KEY_D)) {
-            Camera.Position.add( Camera.GetRightVector().mul(DeltaTime * Camera.Speed) );
+            Camera.Position.add( Camera.GetRightVector().mul((float)Performance_Layer.Deltatime * Camera.Speed) );
         }
 
         if (Mouse.Query(GLFW_MOUSE_BUTTON_MIDDLE)) {
@@ -165,8 +150,8 @@ public class Engine {
         }
 
         if (SimulationPreferences_Layer.PlaySim.get()) {
-            SimEngine.ParticleObject.SetInstanced( SimEngine.Step() );
-            SimEngine.ParticleObject.Mesh.UpdateInstanceBuffer();
+            SimEngine.FluidParticleObject.SetInstanced( SimEngine.Step() );
+            SimEngine.FluidParticleObject.Mesh.UpdateInstanceBuffer();
         }
         else if (GPUTesting_Layer.Play.get()) {
             GPUTesting_Layer.GPU_TEST_STEP();
@@ -193,6 +178,37 @@ public class Engine {
 
         ObjectManager.ComponentUpdate();
 
+        /*System.out.println(
+                MarchingCubes.MetaballFunction(new Vector3f(0, -50f, 0))
+        );*/
+
+        if (VertData != null) {
+            MarchingCell Cell = MarchingGrid.GetCell(0,0,0);
+            int count = 0;
+            for (MarchingPoint PENISSSS : Cell.Vertices) {
+                Gizmo.PushSphereGizmo(PENISSSS.Position, 0.15f);
+                Gizmo.SetGizmoColor(new Vector3f(0,0.125f * count++,0));
+            }
+            count = 0;
+            for (Vector3f COCK : Cell.Edges) {
+                Gizmo.PushSphereGizmo(COCK, 0.125f);
+                Gizmo.SetGizmoColor(new Vector3f(0.083f * count++,0,0));
+            }
+        }
+
+        Gizmo.PushSphereGizmo(penis1, 0.055f);
+        Gizmo.SetGizmoColor(new Vector3f(1,0,0));
+        Gizmo.PushSphereGizmo(penis2, 0.055f);
+        Gizmo.SetGizmoColor(new Vector3f(0,0,1));
+        Gizmo.PushSphereGizmo(penis3, 0.055f);
+        Gizmo.SetGizmoColor(new Vector3f(1,1,1));
+
+        Gizmo.PushSphereGizmo(penis4, 0.055f);
+        Gizmo.PushSphereGizmo(penis5, 0.055f);
+        Gizmo.PushSphereGizmo(penis6, 0.055f);
+
+        //Gizmo.PushSphereGizmo(penis4, 0.055f);
+        //Gizmo.SetGizmoColor(new Vector3f(0.5f, 0.5f, 0));
     }
 
 }

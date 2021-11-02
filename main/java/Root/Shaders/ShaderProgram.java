@@ -13,6 +13,7 @@ import static org.lwjgl.opengl.GL40.*;
 public class ShaderProgram {
 
     public int ProgramHandle, VertexHandle, GeometryHandle, FragmentHandle;
+    private String VertexShaderSource, GeometryShaderSource, FragmentShaderSource;
 
     public ShaderProgram(String VertexShader, String FragmentShader) {
         ProgramHandle = glCreateProgram();
@@ -41,6 +42,9 @@ public class ShaderProgram {
         if (glGetProgrami(ProgramHandle, GL_VALIDATE_STATUS) == GL_FALSE) {
             throw new IllegalStateException("Could not validate shader!");
         }
+
+        VertexShaderSource = VertexShader;
+        FragmentShaderSource = FragmentShader;
 
         glDeleteShader(VertexHandle);
         glDeleteShader(FragmentHandle);
@@ -81,6 +85,10 @@ public class ShaderProgram {
         if (glGetProgrami(ProgramHandle, GL_VALIDATE_STATUS) == GL_FALSE) {
             throw new IllegalStateException("Could not validate shader!");
         }
+
+        VertexShaderSource = VertexShader;
+        GeometryShaderSource = GeometryShader;
+        FragmentShaderSource = FragmentShader;
 
         glDeleteShader(VertexHandle);
         glDeleteShader(GeometryHandle);
@@ -135,25 +143,5 @@ public class ShaderProgram {
                 break;
         }
     }
-
-    public static String LoadShaderResource(String ResourceToken) {
-        try {
-            return Util.InputStreamToString(ShaderProgram.class.getResourceAsStream(ResourceToken));
-        } catch (Exception E) {
-            System.err.println("Could not read Shader at (Resource Token): " + ResourceToken + " !!");
-            return "";
-        }
-    }
-
-    public static String LoadShaderFile(String Path) {
-        try {
-            return Files.readString(Paths.get(Path));
-        } catch (Exception E) {
-            System.err.println("Could not read Shader at: " + Path + " !!");
-            return "";
-        }
-    }
-
-
 }
 

@@ -4,44 +4,59 @@ import Root.GUI.Layer;
 import imgui.ImGui;
 import imgui.flag.ImGuiWindowFlags;
 import imgui.type.ImBoolean;
-import imgui.type.ImString;
-import org.joml.Random;
 
+import java.awt.*;
 import java.text.DecimalFormat;
 
-import static Root.Environment.ISphereWO;
+import static org.lwjgl.glfw.GLFW.glfwGetTime;
 
 public class Performance_Layer implements Layer {
 
-    private static ImString FPS;
-    private static ImString FT;
-    private static ImString DT;
+    private static int FrameCounter = 0;
+    private static double PreviousSecondInterval = 0;
+    private static double PreviousFrameTime = 0;
+    private static StringBuilder FPSStringBuilder = new StringBuilder("Frames per Second: ");
+    private static StringBuilder DTStringBuilder = new StringBuilder("Deltatime: ");
+
+    public static int FPS = 0;
+    public static double Deltatime = 0;
+
+    private static DecimalFormat DF = new DecimalFormat("##.####");
+
+    public static void TrackFPS() {
+        double CurrentFrameTime = glfwGetTime();
+
+        FrameCounter++;
+
+        Deltatime = CurrentFrameTime - PreviousFrameTime;
+        PreviousFrameTime = CurrentFrameTime;
+
+        if (CurrentFrameTime - PreviousSecondInterval > 1) {
+            PreviousSecondInterval = glfwGetTime();
+
+            FPSStringBuilder.setLength(0);
+            FPSStringBuilder.append("Frames per Second: ");
+            FPSStringBuilder.append(FrameCounter);
+
+            DTStringBuilder.setLength(0);
+            DTStringBuilder.append("Deltatime: ");
+            DTStringBuilder.append(DF.format(Deltatime));
+
+            FPS = FrameCounter;
+
+            FrameCounter = 0;
+        }
+
+    }
 
     @Override
     public void Render_ImGUI() {
-        ImGui.begin("Performance", new ImBoolean(false), ImGuiWindowFlags.NoResize);
+        ImGui.begin("Performance");
 
-        ImGui.text("Frames per Second: " + FPS);
-        ImGui.text("Frame time: " + FT);
-        ImGui.text("Delta time: " + DT);
+        ImGui.text(FPSStringBuilder.toString());
 
-        if (ImGui.button("Move Instances")) {
-            float[] ID2 = new float[10000*3];
-            Random Random = new Random();
-            for (int i = 0; i < 10000*3; i++) {
-                ID2[i] = (Random.nextFloat() * 200) - 100;
-            }
-            ISphereWO.SetInstanced(ID2);
-            ISphereWO.Mesh.UpdateInstanceBuffer();
-        }
+        ImGui.text(DTStringBuilder.toString());
 
         ImGui.end();
-    }
-
-    public static void SetData(float FPSIn, float DTIn) {
-        DecimalFormat DF = new DecimalFormat("##.####");
-        FPS = new ImString(DF.format(FPSIn));
-        FT = new ImString(DF.format(1/FPSIn));
-        DT = new ImString(DF.format(DTIn));
     }
 }

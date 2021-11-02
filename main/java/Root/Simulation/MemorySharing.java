@@ -15,9 +15,9 @@ public class MemorySharing {
             Buffer.put((ParticleIndex * 17) + 1, P.Position.y);
             Buffer.put((ParticleIndex * 17) + 2, P.Position.z);
 
-            Buffer.put((ParticleIndex * 17) + 3, P.PastPosition.x);
+            /*Buffer.put((ParticleIndex * 17) + 3, P.PastPosition.x);
             Buffer.put((ParticleIndex * 17) + 4, P.PastPosition.y);
-            Buffer.put((ParticleIndex * 17) + 5, P.PastPosition.z);
+            Buffer.put((ParticleIndex * 17) + 5, P.PastPosition.z);*/
 
             Buffer.put((ParticleIndex * 17) + 6, P.Velocity.x);
             Buffer.put((ParticleIndex * 17) + 7, P.Velocity.y);
@@ -46,9 +46,9 @@ public class MemorySharing {
             Buffer.put((ParticleIndex * 17) + 1, P.Position.y);
             Buffer.put((ParticleIndex * 17) + 2, P.Position.z);
 
-            Buffer.put((ParticleIndex * 17) + 3, P.PastPosition.x);
+            /*Buffer.put((ParticleIndex * 17) + 3, P.PastPosition.x);
             Buffer.put((ParticleIndex * 17) + 4, P.PastPosition.y);
-            Buffer.put((ParticleIndex * 17) + 5, P.PastPosition.z);
+            Buffer.put((ParticleIndex * 17) + 5, P.PastPosition.z);*/
 
             Buffer.put((ParticleIndex * 17) + 6, P.Velocity.x);
             Buffer.put((ParticleIndex * 17) + 7, P.Velocity.y);
@@ -151,43 +151,43 @@ public class MemorySharing {
 
     public static FloatBuffer GetParameterBuffer() {
         FloatBuffer Buffer = Stack.callocFloat(17);
-        Buffer.put(0, Preferences.SmoothingRadius);
-        Buffer.put(1, Preferences.ParticleMass);
+        Buffer.put(0, Preferences.SmoothingRadius[0]);
+        Buffer.put(1, Preferences.ParticleMass[0]);
         Buffer.put(2, Kernels.KernelRadiusPow1);
         Buffer.put(3, Kernels.KernelRadiusPow2);
         Buffer.put(4, Kernels.KernelRadiusPow6);
         Buffer.put(5, Kernels.KernelRadiusPow9);
-        Buffer.put(6, Preferences.RestDensity);
-        Buffer.put(7, Preferences.Stiffness);
-        Buffer.put(8, Preferences.ParticleViscosity);
-        Buffer.put(9, Preferences.Gravity.x);
-        Buffer.put(10, Preferences.Gravity.y);
-        Buffer.put(11, Preferences.Gravity.z);
-        Buffer.put(12, Preferences.BoundarySize.x);
-        Buffer.put(13, Preferences.BoundarySize.y);
-        Buffer.put(14, Preferences.BoundarySize.z);
-        Buffer.put(15, Preferences.Timestep);
-        Buffer.put(16, Preferences.BoundaryElasticity);
+        Buffer.put(6, Preferences.RestDensity[0]);
+        Buffer.put(7, Preferences.Stiffness[0]);
+        Buffer.put(8, Preferences.ParticleViscosity[0]);
+        Buffer.put(9, Preferences.Gravity[0]);
+        Buffer.put(10, Preferences.Gravity[1]);
+        Buffer.put(11, Preferences.Gravity[2]);
+        Buffer.put(12, Preferences.BoundarySize[0]);
+        Buffer.put(13, Preferences.BoundarySize[1]);
+        Buffer.put(14, Preferences.BoundarySize[2]);
+        Buffer.put(15, Preferences.Timestep[0]);
+        Buffer.put(16, Preferences.BoundaryElasticity[0]);
         return Buffer;
     }
 
     public static void GetParameterBuffer(FloatBuffer Buffer) {
-        Buffer.put(0, Preferences.SmoothingRadius);
-        Buffer.put(1, Preferences.ParticleMass);
+        Buffer.put(0, Preferences.SmoothingRadius[0]);
+        Buffer.put(1, Preferences.ParticleMass[0]);
         Buffer.put(2, Kernels.KernelRadiusPow1);
         Buffer.put(3, Kernels.KernelRadiusPow2);
         Buffer.put(4, Kernels.KernelRadiusPow6);
         Buffer.put(5, Kernels.KernelRadiusPow9);
-        Buffer.put(6, Preferences.RestDensity);
-        Buffer.put(7, Preferences.Stiffness);
-        Buffer.put(8, Preferences.ParticleViscosity);
-        Buffer.put(9, Preferences.Gravity.x);
-        Buffer.put(10, Preferences.Gravity.y);
-        Buffer.put(11, Preferences.Gravity.z);
-        Buffer.put(12, Preferences.BoundarySize.x);
-        Buffer.put(13, Preferences.BoundarySize.y);
-        Buffer.put(14, Preferences.BoundarySize.z);
-        Buffer.put(15, Preferences.Timestep);
+        Buffer.put(6, Preferences.RestDensity[0]);
+        Buffer.put(7, Preferences.Stiffness[0]);
+        Buffer.put(8, Preferences.ParticleViscosity[0]);
+        Buffer.put(9, Preferences.Gravity[0]);
+        Buffer.put(10, Preferences.Gravity[1]);
+        Buffer.put(11, Preferences.Gravity[2]);
+        Buffer.put(12, Preferences.BoundarySize[0]);
+        Buffer.put(13, Preferences.BoundarySize[1]);
+        Buffer.put(14, Preferences.BoundarySize[2]);
+        Buffer.put(15, Preferences.Timestep[0]);
     }
 
 }

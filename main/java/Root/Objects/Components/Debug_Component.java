@@ -8,6 +8,7 @@ public class Debug_Component extends Component {
 
     public Debug_Component() {
         Name = "Debug";
+        Type = ComponentManager.ComponentType.Debug;
     }
 
     @Override

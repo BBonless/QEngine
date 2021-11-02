@@ -33,6 +33,7 @@ public class    Inflow_Component extends Component {
 
     public Inflow_Component() {
         Name = "Inflow";
+        Type = ComponentManager.ComponentType.Inflow;
     }
 
     public void ComputeParticles() {
@@ -96,7 +97,7 @@ public class    Inflow_Component extends Component {
             Time = 0;
         }
 
-        Time += Preferences.Timestep;
+        Time += Preferences.Timestep[0];
     }
 
     @Override

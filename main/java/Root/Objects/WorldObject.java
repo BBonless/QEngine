@@ -5,6 +5,7 @@ import Root.Objects.Components.Component;
 import Root.Geometry.Mesh;
 import Root.Shaders.Material;
 import Root.Shaders.ShaderProgram;
+import Root.Textures.NullTexture;
 import Root.Textures.Texture;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
@@ -13,7 +14,7 @@ import java.util.ArrayList;
 
 public class WorldObject {
 
-    public ObjectTree Container;
+    public transient ObjectTree Container;
 
     public String Name = "";
 
@@ -22,9 +23,9 @@ public class WorldObject {
     public Vector3f Rotation = new Vector3f(0,0,0);
     public Vector3f Scale = new Vector3f(1,1,1);
 
-    public ShaderProgram Shader;
+    public ShaderProgram Shader = null;
     public Material Material = Root.Shaders.Material.Default();
-    public Texture Texture;
+    public Texture Texture = null;
 
     public ArrayList<Component> Components = new ArrayList<>();
 
