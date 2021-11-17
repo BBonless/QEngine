@@ -1,10 +1,13 @@
 package Root.Objects.Components;
 
+import Root.Misc.Util.Util;
 import Root.Objects.WorldObject;
+
+import java.util.ArrayList;
 
 public class ComponentManager {
 
-    enum ComponentType {
+    public enum ComponentType {
         Transform,
         Shading,
         Light,
@@ -23,8 +26,12 @@ public class ComponentManager {
             "Debug Component"
     };
 
-    public static void AddComponent(WorldObject Target, int Component) {
-        switch (Component) {
+    public static boolean IsComponentUserAddable(Component Target) {
+        return Target != null ? (Target.Type != ComponentType.Transform && Target.Type != ComponentType.Shading) : false;
+    }
+
+    public static void AddComponent(WorldObject Target, int Type) {
+        switch (Type) {
             case 0:
                 new LightSource_Component().Attach(Target);
                 break;
@@ -44,5 +51,4 @@ public class ComponentManager {
                 break;
         }
     }
-
 }

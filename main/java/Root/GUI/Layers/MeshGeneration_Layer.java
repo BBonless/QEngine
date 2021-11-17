@@ -1,14 +1,12 @@
 package Root.GUI.Layers;
 
-import Root.Engine;
+import Root.Engine.Engine;
 import Root.GUI.Layer;
 import Root.MeshGen.MarchingCubes;
 import Root.MeshGen.MarchingGrid;
 import Root.Simulation.SimEngine;
 import imgui.ImGui;
 import imgui.type.ImBoolean;
-
-import static Root.MeshGen.MarchingGrid.*;
 
 public class MeshGeneration_Layer implements Layer {
 

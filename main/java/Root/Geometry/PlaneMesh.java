@@ -1,11 +1,5 @@
 package Root.Geometry;
 
-import Root.Misc.Util.Util;
-import Root.Rendering.Camera;
-import org.joml.Vector3f;
-
-import java.util.ArrayList;
-
 public class PlaneMesh {
     public static Mesh Generate(float Size) {
         float[] VertexPos = new float[] {

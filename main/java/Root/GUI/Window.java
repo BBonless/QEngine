@@ -1,7 +1,7 @@
 package Root.GUI;
 
 import Root.IO.Control.InputCallbacks;
-import Root.Rendering.Renderer;
+import Root.Engine.Rendering.Renderer;
 import imgui.ImGui;
 import imgui.ImGuiIO;
 import imgui.flag.ImGuiConfigFlags;

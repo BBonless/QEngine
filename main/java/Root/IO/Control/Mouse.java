@@ -1,6 +1,5 @@
 package Root.IO.Control;
 
-import Root.Rendering.Camera;
 import org.joml.Vector2d;
 
 import java.util.HashMap;

@@ -1,6 +1,6 @@
 package Root.Objects.Components;
 
-import Root.Engine;
+import Root.Engine.Engine;
 import Root.Geometry.*;
 import Root.Misc.Util.Util;
 import Root.Objects.WorldObject;
@@ -19,7 +19,7 @@ import java.util.ArrayList;
 
 public class Collision_Component extends Component {
 
-    private int[] Resolution = new int[] {1};
+    private int[] Resolution = new int[] {0};
 
     public ArrayList<Particle> Particles = new ArrayList<>();
     ArrayList<Float> ParticleLocations = new ArrayList<>();
@@ -235,5 +235,12 @@ public class Collision_Component extends Component {
     @Override
     public void Update() {
 
+    }
+
+    @Override
+    public void Delete() {
+        Engine.RenderQueue.remove(CollisionObject);
+        SimEngine.StaticParticles.remove(Particles);
+        super.Delete();
     }
 }

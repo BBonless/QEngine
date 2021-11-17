@@ -1,14 +1,8 @@
 package Root.Geometry;
 
-import Root.GUI.Layers.Browser_Layer;
 import Root.Misc.Util.MathU;
 import Root.Objects.WorldObject;
-import Root.Rendering.Gizmo;
 import org.joml.Vector3f;
-
-import java.util.ArrayList;
-
-import static imgui.extension.imnodes.flag.ImNodesPinShape.Triangle;
 
 public class Operations {
 
