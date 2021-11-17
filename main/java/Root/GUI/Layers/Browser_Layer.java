@@ -19,7 +19,9 @@ import org.joml.Math;
 
 import static Root.IO.File.Load.Load;
 import static Root.IO.File.Save.Save;
+import static Root.Objects.Components.ComponentManager.IsComponentUserAddable;
 import static Root.Objects.ObjectManager.AddObject;
+import static Root.Objects.ObjectManager.Tree;
 import static org.lwjgl.assimp.Assimp.aiProcess_JoinIdenticalVertices;
 import static org.lwjgl.assimp.Assimp.aiProcess_Triangulate;
 import static org.lwjgl.glfw.GLFW.GLFW_KEY_ENTER;
@@ -28,8 +30,9 @@ public class Browser_Layer implements Layer {
 
     private ImInt CurrentChildIndex = new ImInt(0);
 
-    //Selects Root
+    //Represents the Object the user currently has selected, initially it is set to the Root object.
     public static ObjectTree CurrentObject = ObjectManager.Tree;
+    public static Component CurrentOpenComponent = null;
 
     private WorldObject NewbornObject;
     private ImString NewbornObjectName = new ImString(256);
@@ -38,6 +41,7 @@ public class Browser_Layer implements Layer {
     private boolean AddComponent = false;
     private ImInt ComponentTypeIndex = new ImInt(0);
 
+    //Icon for the Rename button
     private Texture EditTexture;
 
     public Browser_Layer() {
@@ -48,21 +52,6 @@ public class Browser_Layer implements Layer {
         CurrentObject = NewObject;
 
         CurrentChildIndex.set(0);
-    }
-
-    private void CancelObjectCreation() {
-        System.out.println("Test");
-        ObjectManager.DeleteObject(NewbornObject);
-        NewbornObject = null;
-        ImGui.closeCurrentPopup();
-    }
-
-    private void CleanupObjectCreation() {
-        NewbornObjectImportFilepath.set("");
-
-        NewbornObjectName.clear();
-        NewbornObject = null;
-        ImGui.closeCurrentPopup();
     }
 
     private boolean ValidateObjectCreation() {
@@ -82,11 +71,35 @@ public class Browser_Layer implements Layer {
 
         //Check if name already exists, otherwise name is valid
         if (ObjectManager.Tree.ValidateName(NewbornObjectName.get())) {
-            NewbornObject.Name = NewbornObjectName.get();
+            if (NewbornObject != null) {
+                NewbornObject.Name = NewbornObjectName.get();
+            }
             return true;
         } else {
             NewbornObjectName.set("Name already exists!");
             return false;
+        }
+    }
+
+    private void CancelObjectCreation() {
+        System.out.println("Test");
+        ObjectManager.DeleteObject(NewbornObject);
+        NewbornObject = null;
+        ImGui.closeCurrentPopup();
+    }
+
+    private void CleanupObjectCreation() {
+        NewbornObjectImportFilepath.set("");
+
+        NewbornObjectName.clear();
+        NewbornObject = null;
+        ImGui.closeCurrentPopup();
+    }
+
+    private void Popups_ComponentAlreadyExists() {
+        if (ImGui.beginPopupModal("Component Already Exists", ImGuiWindowFlags.NoSavedSettings)) {
+            ImGui.text("This component already exists on this object!");
+            ImGui.endPopup();
         }
     }
 
@@ -112,6 +125,36 @@ public class Browser_Layer implements Layer {
             ImGui.sameLine();
             if (ImGui.button("Cancel")) {
                 CancelObjectCreation();
+            }
+
+            ImGui.endPopup();
+        }
+    }
+
+    private void Popups_RenameObject() {
+        if (ImGui.beginPopupModal("Rename Object", ImGuiWindowFlags.NoSavedSettings)) {
+            ImGui.text("Enter New Name:");
+
+            ImGui.pushItemWidth(160);
+            ImGui.inputText("", NewbornObjectName);
+            if (ImGui.isKeyPressed(GLFW_KEY_ENTER)) {
+                if (ValidateObjectCreation()) {
+                    CurrentObject.Element.Name = NewbornObjectName.get();
+                    CleanupObjectCreation();
+                }
+            }
+            ImGui.popItemWidth();
+
+            if (ImGui.button("Rename")) {
+                if (ValidateObjectCreation()) {
+                    CurrentObject.Element.Name = NewbornObjectName.get();
+                    CleanupObjectCreation();
+                }
+            }
+
+            ImGui.sameLine();
+            if (ImGui.button("Cancel")) {
+                ImGui.closeCurrentPopup();
             }
 
             ImGui.endPopup();
@@ -189,6 +232,7 @@ public class Browser_Layer implements Layer {
             ImGui.popItemWidth();
             if (ImGui.button("Add")) {
                 ComponentManager.AddComponent(CurrentObject.Element, ComponentTypeIndex.get());
+                ComponentTypeIndex.set(0);
                 ImGui.closeCurrentPopup();
             }
             ImGui.sameLine();
@@ -206,13 +250,18 @@ public class Browser_Layer implements Layer {
         Popups_ImportObject();
 
         Popups_AddComponent();
+
+        Popups_RenameObject();
     }
+
+    Component ComponentChoppingBlock = null;
 
     @Override
     public void Render_ImGUI() {
         ImGui.begin("Object Browser", new ImBoolean(true), ImGuiWindowFlags.MenuBar);
 
         boolean CurrentObjHasChildren = !CurrentObject.Children.isEmpty();
+        boolean CurrentObjIsLight = CurrentObject.Element.Name == "Light";
         boolean CurrentObjIsRoot = CurrentObject.Parent == null;
 
         Popups_ImGUI();
@@ -220,15 +269,15 @@ public class Browser_Layer implements Layer {
         if (ImGui.beginMenuBar()) {
             if (ImGui.beginMenu("File")) {
                 if (ImGui.menuItem("Save")) {
-                    Save("C:\\Users\\quent\\Desktop\\Test.qes");
+                    Save("C:\\Users\\quent\\Desktop\\Scene.qes");
                 }
                 if (ImGui.menuItem("Load")) {
-                    Load("C:\\Users\\quent\\Desktop\\Test.qes");
+                    Load("C:\\Users\\quent\\Desktop\\Scene.qes");
                 }
                 ImGui.endMenu();
             }
 
-            if (ImGui.beginMenu("Objects")) {
+            if (ImGui.beginMenu("Object")) {
                 if (ImGui.beginMenu("Create")) {
                     if (ImGui.menuItem("Cube")) {
                         NewbornObject = AddObject(ObjectManager.ObjectType.DebugBox);
@@ -248,10 +297,48 @@ public class Browser_Layer implements Layer {
 
                     ImGui.endMenu();
                 }
+
+                if (!CurrentObjIsRoot && !CurrentObjIsLight) {
+                    if (ImGui.menuItem("Delete Current Object")) {
+                        WorldObject ToDelete = CurrentObject.Element;
+                        SelectNewObject(CurrentObject.Parent);
+                        ObjectManager.DeleteObject(ToDelete);
+                    }
+                }
+
+                if (ImGui.beginMenu("Delete Component")) {
+                    if (CurrentObject.Element.Components.size() > 2 && !CurrentObjIsLight && !CurrentObjIsRoot) {
+                        for (Component C : CurrentObject.Element.Components) {
+                            if (IsComponentUserAddable(C)) {
+                                if (ImGui.menuItem(C.Name)) {
+                                    ComponentChoppingBlock = C;
+                                }
+                            }
+                        }
+
+                        ImGui.separator();
+                        if (IsComponentUserAddable(CurrentOpenComponent)) {
+                            if (ImGui.menuItem("Current Open Component")) {
+                                CurrentOpenComponent.Delete();
+                            }
+                        }
+                    }
+                    else {
+                        ImGui.menuItem("No Components to Delete!");
+                    }
+
+                    ImGui.endMenu();
+                }
+
                 ImGui.endMenu();
             }
 
             ImGui.endMenuBar();
+        }
+
+        if (ComponentChoppingBlock != null) {
+            ComponentChoppingBlock.Delete();
+            ComponentChoppingBlock = null;
         }
 
         if (NewbornObject != null) {
@@ -264,7 +351,23 @@ public class Browser_Layer implements Layer {
 
         ImGui.text("Current Object: "); ImGui.sameLine(); ImGui.pushItemWidth(ImGui.getWindowSizeX() / 2);
         ImGui.inputText("", new ImString(CurrentObject.Element.Name), ImGuiInputTextFlags.ReadOnly);
-        ImGui.popItemWidth(); ImGui.sameLine(); ImGui.imageButton(EditTexture.Handle, 14, 14);
+        ImGui.popItemWidth();
+
+        //If the current object is the root or a light
+        ImGui.sameLine();
+        if (CurrentObjIsRoot || CurrentObjIsLight) {
+            ImGui.pushStyleColor(ImGuiCol.Button, 0.25f, 0.25f, 0.25f, 1.0f);
+            ImGui.pushStyleColor(ImGuiCol.ButtonHovered, 0.25f, 0.25f, 0.25f, 1.0f);
+            ImGui.pushStyleColor(ImGuiCol.ButtonActive, 0.25f, 0.25f, 0.25f, 1.0f);
+            if (ImGui.imageButton(EditTexture.Handle, 14, 14));
+            ImGui.popStyleColor(3);
+        }
+        else {
+            if (ImGui.imageButton(EditTexture.Handle, 14, 14)) {
+                ImGui.openPopup("Rename Object");
+            }
+        }
+
 
         ImGui.listBox("Children", CurrentChildIndex, GetChildNodeArray(CurrentObject) );
 
@@ -276,16 +379,18 @@ public class Browser_Layer implements Layer {
         else {
             ImGui.pushStyleColor(ImGuiCol.Button, 0.25f, 0.25f, 0.25f, 1.0f);
             ImGui.pushStyleColor(ImGuiCol.ButtonHovered, 0.25f, 0.25f, 0.25f, 1.0f);
+            ImGui.pushStyleColor(ImGuiCol.ButtonActive, 0.25f, 0.25f, 0.25f, 1.0f);
             ImGui.button("Forward");
-            ImGui.popStyleColor(2);
+            ImGui.popStyleColor(3);
         }
 
         ImGui.sameLine();
         if (CurrentObjIsRoot) {
             ImGui.pushStyleColor(ImGuiCol.Button, 0.25f, 0.25f, 0.25f, 1.0f);
             ImGui.pushStyleColor(ImGuiCol.ButtonHovered, 0.25f, 0.25f, 0.25f, 1.0f);
+            ImGui.pushStyleColor(ImGuiCol.ButtonActive, 0.25f, 0.25f, 0.25f, 1.0f);
             ImGui.button("Back");
-            ImGui.popStyleColor(2);
+            ImGui.popStyleColor(3);
         }
         else {
             if (ImGui.button("Back")) {
@@ -299,6 +404,15 @@ public class Browser_Layer implements Layer {
 
             for (Component Comp : CurrentObject.Element.Components) {
                 Comp.GUI();
+            }
+
+            if (IsComponentUserAddable(CurrentOpenComponent) && (CurrentObject.Element.Components.size() > 2 && !CurrentObjIsLight && !CurrentObjIsRoot)) {
+                ImGui.separator();
+                ImGui.pushStyleColor(ImGuiCol.Button, 0.514f, 0.224f, 0.173f, 1.0f);
+                if (ImGui.button("Delete Component")) {
+                    CurrentOpenComponent.Delete();
+                }
+                ImGui.popStyleColor();
             }
 
             if (!CurrentObjIsRoot && ImGui.tabItemButton("+")) {

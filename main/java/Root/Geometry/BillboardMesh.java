@@ -1,11 +1,5 @@
 package Root.Geometry;
 
-import Root.Misc.Util.Util;
-import Root.Rendering.Camera;
-import org.joml.Vector3f;
-
-import java.util.ArrayList;
-
 public class BillboardMesh {
 
     /*public static Mesh Generate(Vector3f Position, float Size) {

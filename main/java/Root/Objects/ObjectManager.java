@@ -1,12 +1,12 @@
 package Root.Objects;
 
-import Root.Engine;
+import Root.Engine.Engine;
 import Root.GUI.Layers.Browser_Layer;
 import Root.Geometry.CubeMesh;
 import Root.Misc.Structures.ObjectTree;
 import Root.Objects.Components.*;
 import Root.Geometry.SphereMesh;
-import Root.Rendering.Renderer;
+import Root.Engine.Rendering.Renderer;
 import Root.Shaders.Material;
 import org.joml.Vector3f;
 

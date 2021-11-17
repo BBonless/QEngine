@@ -15,8 +15,6 @@ public abstract class Component {
     public String Name = "No Name";
     public ComponentManager.ComponentType Type = ComponentManager.ComponentType.None;
 
-    private boolean PendingDelete = false;
-
     abstract public void Upload(ShaderProgram Shader);
 
     abstract public void InternalGUI();
@@ -27,22 +25,12 @@ public abstract class Component {
 
     public void GUI() {
         if (ImGui.beginTabItem(Name)) {
+            Browser_Layer.CurrentOpenComponent = this;
 
             InternalGUI();
 
-            //Only allow user-addable components to be deleted
-            if (ArrayU.StrArrContains(ComponentManager.ComponentTypeList, Name)) {
-                ImGui.pushStyleColor(ImGuiCol.Button, 0.514f, 0.224f, 0.173f, 1.0f);
-                if (ImGui.button("Remove Component")) {
-                    PendingDelete = true;
-                }
-                ImGui.popStyleColor();
-            }
-
-
             ImGui.endTabItem();
         }
-
 
     }
 

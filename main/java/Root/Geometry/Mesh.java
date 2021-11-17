@@ -155,6 +155,7 @@ public class Mesh {
     }
 
     public void Instance() {
+        //16 MB max instance data
         FloatBuffer InstanceDataBuffer = MemoryUtil.memAllocFloat(16*1000000);
         ((Buffer)InstanceDataBuffer.put(InstanceData)).flip();
         InstanceDataBuffer.limit(16*1000000);

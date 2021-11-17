@@ -1,7 +1,7 @@
 package Root.Objects.Components;
 
 import Root.GUI.Layers.SimulationPreferences_Layer;
-import Root.Rendering.Gizmo;
+import Root.Engine.Rendering.Gizmo;
 import Root.Shaders.ShaderProgram;
 import Root.Simulation.Particle;
 import Root.Simulation.SimEngine;
