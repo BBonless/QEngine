@@ -11,7 +11,7 @@ public class Particle {
     public Vector3f Position = new Vector3f(0,0,0);
 
     public Vector3f Velocity = new Vector3f(0,0,0);
-    public Vector3f PastAcceleration = new Vector3f(0,0,0);
+    public Vector3f Acceleration = new Vector3f(0,0,0);
     public Vector3f Force = new Vector3f(0,0,0);
 
     public float Pressure = 0;
@@ -32,9 +32,9 @@ public class Particle {
         Buffer.put(7, Velocity.y);
         Buffer.put(8, Velocity.z);
 
-        Buffer.put(9, PastAcceleration.x);
-        Buffer.put(10, PastAcceleration.y);
-        Buffer.put(11, PastAcceleration.z);
+        Buffer.put(9, Acceleration.x);
+        Buffer.put(10, Acceleration.y);
+        Buffer.put(11, Acceleration.z);
 
         Buffer.put(12, Force.x);
         Buffer.put(13, Force.y);

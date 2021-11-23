@@ -23,9 +23,9 @@ public class MemorySharing {
             Buffer.put((ParticleIndex * 17) + 7, P.Velocity.y);
             Buffer.put((ParticleIndex * 17) + 8, P.Velocity.z);
 
-            Buffer.put((ParticleIndex * 17) + 9, P.PastAcceleration.x);
-            Buffer.put((ParticleIndex * 17) + 10, P.PastAcceleration.y);
-            Buffer.put((ParticleIndex * 17) + 11, P.PastAcceleration.z);
+            Buffer.put((ParticleIndex * 17) + 9, P.Acceleration.x);
+            Buffer.put((ParticleIndex * 17) + 10, P.Acceleration.y);
+            Buffer.put((ParticleIndex * 17) + 11, P.Acceleration.z);
 
             Buffer.put((ParticleIndex * 17) + 12, P.Force.x);
             Buffer.put((ParticleIndex * 17) + 13, P.Force.y);
@@ -54,9 +54,9 @@ public class MemorySharing {
             Buffer.put((ParticleIndex * 17) + 7, P.Velocity.y);
             Buffer.put((ParticleIndex * 17) + 8, P.Velocity.z);
 
-            Buffer.put((ParticleIndex * 17) + 9, P.PastAcceleration.x);
-            Buffer.put((ParticleIndex * 17) + 10, P.PastAcceleration.y);
-            Buffer.put((ParticleIndex * 17) + 11, P.PastAcceleration.z);
+            Buffer.put((ParticleIndex * 17) + 9, P.Acceleration.x);
+            Buffer.put((ParticleIndex * 17) + 10, P.Acceleration.y);
+            Buffer.put((ParticleIndex * 17) + 11, P.Acceleration.z);
 
             Buffer.put((ParticleIndex * 17) + 12, P.Force.x);
             Buffer.put((ParticleIndex * 17) + 13, P.Force.y);
@@ -88,9 +88,9 @@ public class MemorySharing {
                     Buffer.put( (ParticleIndex * (64 * 17)) + (17 * NeighborIndex) + 7, Neighbor.Velocity.y );
                     Buffer.put( (ParticleIndex * (64 * 17)) + (17 * NeighborIndex) + 8, Neighbor.Velocity.z );
 
-                    Buffer.put( (ParticleIndex * (64 * 17)) + (17 * NeighborIndex) + 9, Neighbor.PastAcceleration.x );
-                    Buffer.put( (ParticleIndex * (64 * 17)) + (17 * NeighborIndex) + 10, Neighbor.PastAcceleration.y );
-                    Buffer.put( (ParticleIndex * (64 * 17)) + (17 * NeighborIndex) + 11, Neighbor.PastAcceleration.z );
+                    Buffer.put( (ParticleIndex * (64 * 17)) + (17 * NeighborIndex) + 9, Neighbor.Acceleration.x );
+                    Buffer.put( (ParticleIndex * (64 * 17)) + (17 * NeighborIndex) + 10, Neighbor.Acceleration.y );
+                    Buffer.put( (ParticleIndex * (64 * 17)) + (17 * NeighborIndex) + 11, Neighbor.Acceleration.z );
 
                     Buffer.put( (ParticleIndex * (64 * 17)) + (17 * NeighborIndex) + 12, Neighbor.Force.x );
                     Buffer.put( (ParticleIndex * (64 * 17)) + (17 * NeighborIndex) + 13, Neighbor.Force.y );
@@ -128,9 +128,9 @@ public class MemorySharing {
                     Buffer.put( (ParticleIndex * (64 * 17)) + (17 * NeighborIndex) + 7, Neighbor.Velocity.y );
                     Buffer.put( (ParticleIndex * (64 * 17)) + (17 * NeighborIndex) + 8, Neighbor.Velocity.z );
 
-                    Buffer.put( (ParticleIndex * (64 * 17)) + (17 * NeighborIndex) + 9, Neighbor.PastAcceleration.x );
-                    Buffer.put( (ParticleIndex * (64 * 17)) + (17 * NeighborIndex) + 10, Neighbor.PastAcceleration.y );
-                    Buffer.put( (ParticleIndex * (64 * 17)) + (17 * NeighborIndex) + 11, Neighbor.PastAcceleration.z );
+                    Buffer.put( (ParticleIndex * (64 * 17)) + (17 * NeighborIndex) + 9, Neighbor.Acceleration.x );
+                    Buffer.put( (ParticleIndex * (64 * 17)) + (17 * NeighborIndex) + 10, Neighbor.Acceleration.y );
+                    Buffer.put( (ParticleIndex * (64 * 17)) + (17 * NeighborIndex) + 11, Neighbor.Acceleration.z );
 
                     Buffer.put( (ParticleIndex * (64 * 17)) + (17 * NeighborIndex) + 12, Neighbor.Force.x );
                     Buffer.put( (ParticleIndex * (64 * 17)) + (17 * NeighborIndex) + 13, Neighbor.Force.y );

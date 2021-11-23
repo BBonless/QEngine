@@ -84,6 +84,8 @@ public class SimEngine {
         Grid.Fill(DynamicParticles);
         Grid.Fill(StaticParticles);
 
+        //Ensures ParticlePositions is the size it needs to be to fit all the particles
+        //Needed as when particles are added or removed, DynamicParticles is updated, ParticlePositions isn't
         if (ParticlePositions.length != DynamicParticles.length * 3) {
             ParticlePositions = new float[DynamicParticles.length * 3];
         }
@@ -91,8 +93,8 @@ public class SimEngine {
 
         for (int i = 0; i < Preferences.SimulationIterations[0]; i++) {
 
+            //Find Neighbors
             for (Particle P1 : DynamicParticles) {
-                //Find Neighbors
                 Particle_SetNeighborsGrid(P1);
             }
 
@@ -102,21 +104,16 @@ public class SimEngine {
                 for (Particle P1 : DynamicParticles) {
                     Particle_SetDensityPressure(P1);
                 }
-                /*for (ArrayList<Particle> ParticlePacket : StaticParticles) {
-                    for (Particle P1: ParticlePacket) {
-                        Particle_SetDensityPressure(P1);
-                    }
-                }*/
 
+                //Set Net Force
                 for (Particle P1 : DynamicParticles) {
-                    //Set Net Force
                     Particle_SetNetForce(P1);
                 }
 
             }
 
+            //Integrate Particles
             for (Particle P1 : DynamicParticles) {
-                //Integrate Particles
                 Particle_Integrate(P1);
             }
         }
@@ -202,6 +199,8 @@ public class SimEngine {
             //If particles are the same, skip
             if (P1 == P2) { continue; }
 
+            //Check if the Neighbor is inside of the Kernel's radius
+            //No point doing calculation if it isn't
             if (Util.DistanceSquared(P1, P2) <= Preferences.SmoothingRadiusSqr) {
                 P1.Density += Preferences.ParticleMass[0] * Kernels.Poly6(P1, P2);
             }
@@ -232,16 +231,16 @@ public class SimEngine {
 
             ViscosityGradient.add(Physics_ComputeViscosityForce(P1, P2));
         }
-        P1.Force.add(PressureGradient).add(ViscosityGradient).add(Util.FloatArrToVec(Preferences.Gravity)).add(Util.RandomVector(1).mul(0.1f));
+        P1.Force
+                .add(PressureGradient)
+                .add(ViscosityGradient)
+                .add(Util.FloatArrToVec(Preferences.Gravity))
+                .add(Util.RandomVector(1).mul(0.1f));
     }
 
     private static void Particle_Integrate(Particle P1) {
-        //Particle_EnforceBoundary(P1);
-
-        //Try Vector3 ParticleAcceleration = P1.Force * P.ParticleMass; Replace P1.NetForce with PA
-
         Vector3f NewVelocity = new Vector3f(0,0,0);
-        P1.PastAcceleration.add(P1.Force, NewVelocity);
+        P1.Acceleration.add(P1.Force, NewVelocity);
         P1.Velocity.add( NewVelocity.mul(0.5f).mul(Preferences.Timestep[0]) );
 
         Vector3f DeltaPosition = new Vector3f(0,0,0);
@@ -256,17 +255,14 @@ public class SimEngine {
         AuxVel.add(AuxForce, DeltaPosition);
 
         P1.Position.add(DeltaPosition);
-        P1.PastAcceleration = P1.Force;
+        P1.Acceleration = P1.Force;
 
         Particle_EnforceBoundary(P1);
 
-        ParticlePositions[ParticleCounter*3+0] = P1.Position.x;
-        ParticlePositions[ParticleCounter*3+1] = P1.Position.y;
-        ParticlePositions[ParticleCounter*3+2] = P1.Position.z;
-        ParticleCounter++;
-        if (ParticleCounter >= ParticlePositions.length / 3) {
-            ParticleCounter = 0;
+        for (int i = 0; i < 3; i++) {
+            ParticlePositions[ParticleCounter*3+i] = P1.Position.get(i);
         }
+        ParticleCounter++;
     }
     
     private static void Particle_EnforceBoundary(Particle P1) {
@@ -324,13 +320,19 @@ public class SimEngine {
         float Dividend = P1.Pressure + P2.Pressure;
         float Divisor = 2 * P1.Density * P2.Density;
 
-        return Kernels.SpikyGrad(P1, P2).mul(-Preferences.ParticleMass[0] * (Dividend / Divisor));
+        return Kernels.SpikyGrad(P1, P2)
+                .mul(-Preferences.ParticleMass[0] * (Dividend / Divisor));
     }
 
     public static Vector3f Physics_ComputeViscosityForce(Particle P1, Particle P2) {
         Vector3f DeltaVelocity = new Vector3f(0,0,0);
         P1.Velocity.sub(P2.Velocity, DeltaVelocity);
 
-        return DeltaVelocity.mul( -Preferences.ParticleViscosity[0] * (Preferences.ParticleMass[0] / P1.Density) * Kernels.Laplacian(P1, P2) );
+        return DeltaVelocity.mul(
+                -Preferences.ParticleViscosity[0] * (
+                        Preferences.ParticleMass[0] / P1.Density
+                        )
+                * Kernels.Laplacian(P1, P2)
+        );
     }
 }
