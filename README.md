@@ -1,5 +1,5 @@
 # QEngine
-A Fluid Simulation Engine with GPU (OpenCL) acceleration made in Java, designed to be simple to use but allow for complex simulations
+A Fluid Simulation Engine with GPU (OpenCL) acceleration made in Java (<- Okay well I tried but I couldn't get the GPU acceleration working in time lol), designed to be simple to use but allow for complex simulations
 
 *Made for my IB Computer Science Internal Assessment*
 
